@@ -1,0 +1,37 @@
+version: "3.4"
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cv_app_db
+    ports:
+      - 5432:5432
+    command: ["postgres", "-c", "log_statement=all"]
+
+  # redis:
+  #   image: redis:latest
+
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres/cv_app_db
+      - |
+        SQLX_DATABASES={
+          postgres={url=postgres://postgres:postgres@postgres/cv_app_db}
+        }
+      # - SMTP_HOST=smtp.gmail.com
+      # - SMTP_USERNAME=
+      # - SMTP_PASSWORD=
+    ports:
+      - 5800:5800
+    volumes:
+      - ./:/app
+
+        # ROCKET_DATABASES={
+        #   postgres={url=postgres://postgres:postgres@postgres/app_db},
+        #   redis={url=redis://redis:6379}
+        # }
+
