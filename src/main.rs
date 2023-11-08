@@ -1,46 +1,27 @@
 use api::clientcompany::{
     create_client_company, delete_client_company, list_clients, update_client_company,
 };
-use api::cv::{list_cvs, create_cv, update_cv, delete_cv};
-use api::jobfunction::{list_jobfunctions, create_job_function, update_job_function, delete_job_function};
-use api::keyword::{list_keywords, create_keyword, update_keyword, delete_keyword};
-use api::user::{list_users, create_user, update_user, delete_user};
-use once_cell::sync::{Lazy, OnceCell};
-use salvo::oapi::{extract::*, ToSchema};
+use api::cv::{create_cv, delete_cv, list_cvs, update_cv};
+use api::jobfunction::{
+    create_job_function, delete_job_function, list_jobfunctions, update_job_function,
+};
+use api::keyword::{create_keyword, delete_keyword, list_keywords, update_keyword};
+use api::user::{create_user, delete_user, list_users, update_user};
 use salvo::prelude::*;
-use serde::{Deserialize, Serialize};
-use sqlx::{PgConnection, PgPool, Row};
-use tokio::sync::Mutex;
+use db_connectors::{create_pg_pool, get_postgres};
 
 pub mod models;
-use crate::models::*;
+// use crate::models::*;
 
 pub mod api;
-use crate::api::clientcompany;
-
-static STORE: Lazy<Db> = Lazy::new(new_store);
-pub type Db = Mutex<Vec<User>>;
-
-pub fn new_store() -> Db {
-    Mutex::new(Vec::new())
-}
-
-static POSTGRES: OnceCell<PgPool> = OnceCell::new();
-
-#[inline]
-pub fn get_postgres() -> &'static PgPool {
-    unsafe { POSTGRES.get_unchecked() }
-}
+pub mod db_connectors;
+// use crate::api::clientcompany;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().init();
 
-    let database_url = std::env::var("DATABASE_URL").expect("Cannot load DB url from env");
-    let pool = PgPool::connect(&database_url)
-        .await
-        .expect("Cannot load DB url from env");
-    POSTGRES.set(pool).unwrap();
+    create_pg_pool().await;
 
     let _ = sqlx::migrate!("./migrations").run(get_postgres()).await;
 
@@ -90,11 +71,7 @@ async fn main() {
                 Router::with_path("cvs")
                     .get(list_cvs)
                     .post(create_cv)
-                    .push(
-                        Router::with_path("<id>")
-                            .patch(update_cv)
-                            .delete(delete_cv),
-                    ),
+                    .push(Router::with_path("<id>").patch(update_cv).delete(delete_cv)),
             )
             .push(
                 Router::with_path("users")

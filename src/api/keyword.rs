@@ -1,11 +1,13 @@
-use salvo::{endpoint, oapi::extract::*};
-use salvo::writing::Json;
-use salvo::http::StatusError;
-use salvo::http::StatusCode;
 use once_cell::sync::Lazy;
+use salvo::http::StatusCode;
+use salvo::http::StatusError;
+use salvo::writing::Json;
+use salvo::Error;
+use salvo::{endpoint, oapi::extract::*};
+use sqlx::Row;
 use tokio::sync::Mutex;
 
-use crate::models::Keyword;
+use crate::models::keyword::Keyword;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<Keyword>>;
@@ -18,28 +20,25 @@ pub fn new_store() -> Db {
 #[endpoint(
     tags("keywords"),
     parameters(
-        ("offset", description = "Offset is an optional query paramter."),
+        ("offset", description = "Offset is an optional query parameter."),
+        ("limit", description = "Limit is an optional query parameter."),
     )
 )]
 pub async fn list_keywords(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
-) -> Json<Vec<Keyword>> {
-    let keyword = STORE.lock().await;
-    let keyword: Vec<Keyword> = keyword
-        .clone()
-        .into_iter()
-        .skip(offset.into_inner().unwrap_or(0))
-        .take(limit.into_inner().unwrap_or(std::usize::MAX))
-        .collect();
-    Json(keyword)
+) -> Result<Json<Vec<Keyword>>, salvo::Error> {
+    println!("67     list_keywords()");
+    let keywords_list = STORE.lock().await;
+
+    let keywords_list: Vec<Keyword> = Keyword::get_keywords().await?;
+
+    std::result::Result::Ok(Json(keywords_list))
 }
 
 /// Create new keyword.
 #[endpoint(tags("keywords"), status_codes(201, 409))]
-pub async fn create_keyword(
-    new_keyword: JsonBody<Keyword>,
-) -> Result<StatusCode, StatusError> {
+pub async fn create_keyword(new_keyword: JsonBody<Keyword>) -> Result<StatusCode, StatusError> {
     tracing::debug!(keyword = ?new_keyword, "create keyword");
 
     let mut vec = STORE.lock().await;

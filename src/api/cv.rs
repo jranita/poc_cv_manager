@@ -1,11 +1,16 @@
-use salvo::{endpoint, oapi::extract::*};
-use salvo::writing::Json;
-use salvo::http::StatusError;
-use salvo::http::StatusCode;
 use once_cell::sync::Lazy;
+use salvo::http::StatusCode;
+use salvo::http::StatusError;
+use salvo::writing::Json;
+use salvo::Error;
+use salvo::{endpoint, oapi::extract::*};
+use sqlx::Row;
 use tokio::sync::Mutex;
 
-use crate::models::CV;
+use crate::models::cv::CV;
+use crate::models::keyword::Keyword;
+
+
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<CV>>;
@@ -14,33 +19,29 @@ pub fn new_store() -> Db {
     Mutex::new(Vec::new())
 }
 
-
 /// List cvs.
 #[endpoint(
     tags("cvs"),
     parameters(
-        ("offset", description = "Offset is an optional query paramter."),
+        ("offset", description = "Offset is an optional query parameter."),
+        ("limit", description = "Limit is an optional query parameter."),
     )
 )]
 pub async fn list_cvs(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
-) -> Json<Vec<CV>> {
-    let cv = STORE.lock().await;
-    let cv: Vec<CV> = cv
-        .clone()
-        .into_iter()
-        .skip(offset.into_inner().unwrap_or(0))
-        .take(limit.into_inner().unwrap_or(std::usize::MAX))
-        .collect();
-    Json(cv)
+) -> Result<Json<Vec<CV>>, salvo::Error> {
+    println!("67     list_cvs()");
+    let cvs_list = STORE.lock().await;
+
+    let cvs_list: Vec<CV> = CV::get_cvs().await?;
+
+    std::result::Result::Ok(Json(cvs_list))
 }
 
 /// Create new CV.
 #[endpoint(tags("cvs"), status_codes(201, 409))]
-pub async fn create_cv(
-    new_cv: JsonBody<CV>,
-) -> Result<StatusCode, StatusError> {
+pub async fn create_cv(new_cv: JsonBody<CV>) -> Result<StatusCode, StatusError> {
     tracing::debug!(cv = ?new_cv, "create cv");
 
     let mut vec = STORE.lock().await;

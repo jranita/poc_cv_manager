@@ -1,12 +1,14 @@
-use salvo::{endpoint, oapi::extract::*};
-use salvo::writing::Json;
-use salvo::http::StatusError;
-use salvo::http::StatusCode;
+use crate::db_connectors::get_postgres;
 use once_cell::sync::Lazy;
+use salvo::http::StatusCode;
+use salvo::http::StatusError;
+use salvo::writing::Json;
+use salvo::Error;
+use salvo::{endpoint, oapi::extract::*};
+use sqlx::Row;
 use tokio::sync::Mutex;
 
-
-use crate::models::ClientCompany;
+use crate::models::client_company::ClientCompany;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<ClientCompany>>;
@@ -15,26 +17,25 @@ pub fn new_store() -> Db {
     Mutex::new(Vec::new())
 }
 
-
 /// List clients.
 #[endpoint(
     tags("clients"),
+    status_codes(200, 500),
     parameters(
-        ("offset", description = "Offset is an optional query paramter."),
+        ("offset", description = "Offset is an optional query parameter."),
+        ("limit", description = "Limit is an optional query parameter."),
     )
 )]
 pub async fn list_clients(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
-) -> Json<Vec<ClientCompany>> {
-    let client_company = STORE.lock().await;
-    let client_company: Vec<ClientCompany> = client_company
-        .clone()
-        .into_iter()
-        .skip(offset.into_inner().unwrap_or(0))
-        .take(limit.into_inner().unwrap_or(std::usize::MAX))
-        .collect();
-    Json(client_company)
+) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
+    println!("67     list_clients()");
+    let clients_list = STORE.lock().await;
+
+    let clients_list: Vec<ClientCompany> = ClientCompany::get_clients().await?;
+
+    std::result::Result::Ok(Json(clients_list))
 }
 
 /// Create new client company.

@@ -7,6 +7,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=cv_app_db
+      - PGHOST=127.0.0.1
+      - PGPORT=5432
     ports:
       - 5432:5432
     command: ["postgres", "-c", "log_statement=all"]
@@ -34,4 +36,3 @@ services:
         #   postgres={url=postgres://postgres:postgres@postgres/app_db},
         #   redis={url=redis://redis:6379}
         # }
-

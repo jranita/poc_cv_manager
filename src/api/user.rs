@@ -5,7 +5,7 @@ use salvo::writing::Json;
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
-use crate::models::User;
+use crate::models::user::User;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<User>>;
@@ -15,24 +15,24 @@ pub fn new_store() -> Db {
 }
 
 /// List clients.
+/// List users.
 #[endpoint(
     tags("users"),
     parameters(
-        ("offset", description = "Offset is an optional query paramter."),
+        ("offset", description = "Offset is an optional query parameter."),
+        ("limit", description = "Limit is an optional query parameter."),
     )
 )]
 pub async fn list_users(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
-) -> Json<Vec<User>> {
-    let user = STORE.lock().await;
-    let user: Vec<User> = user
-        .clone()
-        .into_iter()
-        .skip(offset.into_inner().unwrap_or(0))
-        .take(limit.into_inner().unwrap_or(std::usize::MAX))
-        .collect();
-    Json(user)
+) -> Result<Json<Vec<User>>, salvo::Error> {
+    println!("67     list_users()");
+    let users_list = STORE.lock().await;
+
+    let users_list: Vec<User> = User::get_users().await?;
+
+    std::result::Result::Ok(Json(users_list))
 }
 
 /// Create new user.
