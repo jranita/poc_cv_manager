@@ -6,8 +6,7 @@ CREATE TABLE users (
     password varchar NOT NULL,
     cv_id_list integer[],
     role varchar NOT NULL,
-    -- create_dt datetime not null default (datetime('now')),
-    date_created timestamp
+    date_created timestamp without time zone default (now() at time zone('utc'))
 );
 
 CREATE TABLE cvs (
@@ -17,24 +16,24 @@ CREATE TABLE cvs (
     target_companies integer[],
     keyword_list integer[],
     target_job_function integer[],
-    date_created timestamp
+    date_created timestamp without time zone default (now() at time zone('utc'))
 );
 
 CREATE TABLE jobfunctions (
     id serial PRIMARY KEY,
     job_function_name text NOT NULL,
     keyword_list integer[],
-    date_created timestamp
+    date_created timestamp without time zone default (now() at time zone('utc'))
 );
 
 CREATE TABLE keywords (
     id serial PRIMARY KEY,
     keyword_name text NOT NULL,
-    date_created timestamp
+    date_created timestamp without time zone default (now() at time zone('utc'))
 );
 
 CREATE TABLE clientcompanies (
     id serial PRIMARY KEY,
     company_name text NOT NULL,
-    date_created timestamp
+    date_created timestamp without time zone default (now() at time zone('utc'))
 );
