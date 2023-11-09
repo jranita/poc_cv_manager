@@ -8,6 +8,7 @@ use sqlx::Row;
 use tokio::sync::Mutex;
 
 use crate::models::job_function::JobFunction;
+use crate::models::job_function::NewJobFunction;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<JobFunction>>;
@@ -36,23 +37,18 @@ pub async fn list_jobfunctions(
     std::result::Result::Ok(Json(jobfunctions_list))
 }
 
-/// Create new job function.
-#[endpoint(tags("jobfunctions"), status_codes(201, 409))]
-pub async fn create_job_function(
-    new_job_function: JsonBody<JobFunction>,
-) -> Result<StatusCode, StatusError> {
-    tracing::debug!(job_function = ?new_job_function, "create job_function");
+#[endpoint(tags("jobfunctions"), status_codes(201, 500))]
+pub async fn create_job_function(new_job_function_json: JsonBody<NewJobFunction>) -> Result<StatusCode, salvo::Error> {
+    tracing::debug!(job_function = ?new_job_function_json, "create job_function");
+
+    let JsonBody(new_job_function) = new_job_function_json;
 
     let mut vec = STORE.lock().await;
 
-    for job_function_x in vec.iter() {
-        if job_function_x.id == new_job_function.id {
-            tracing::debug!(id = ?new_job_function.id, "job_function already exists");
-            return Err(StatusError::bad_request().brief("job_function already exists"));
-        }
-    }
+    println!("50  {:?}", new_job_function.job_function_name);
+    let new_job_function = JobFunction::insert_jobfunction(new_job_function).await?;
 
-    vec.push(new_job_function.into_inner());
+    vec.push(new_job_function);
     Ok(StatusCode::CREATED)
 }
 

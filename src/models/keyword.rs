@@ -43,6 +43,25 @@ impl Keyword {
 
         Ok(keywords_list)
     }
+
+    pub async fn insert_keyword(c: NewKeyword) -> Result<Keyword, Error> {
+        println!("56     insert_keyword() {:?} {:?}", c, NaiveDateTime::default());
+
+        let query: String = format!("INSERT INTO keywords (keyword_name) VALUES ('{}')", c.keyword_name );
+        println!("59     query {:?}", query);
+
+        let inserted = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute insert query: {:?}", e);
+                anyhow::anyhow!("Failed to insert record")
+            })?;
+
+        Ok(Keyword { id: inserted as i32, keyword_name: c.keyword_name, date_created: NaiveDateTime::default() })
+    }
+
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

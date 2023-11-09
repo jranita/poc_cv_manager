@@ -5,6 +5,7 @@ use salvo::writing::Json;
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
+use crate::models::user::NewUser;
 use crate::models::user::User;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
@@ -36,20 +37,18 @@ pub async fn list_users(
 }
 
 /// Create new user.
-#[endpoint(tags("users"), status_codes(201, 409))]
-pub async fn create_user(new_user: JsonBody<User>) -> Result<StatusCode, StatusError> {
-    tracing::debug!(user = ?new_user, "create user");
+#[endpoint(tags("users"), status_codes(201, 500))]
+pub async fn create_user(new_user_json: JsonBody<NewUser>) -> Result<StatusCode, salvo::Error> {
+    tracing::debug!(user = ?new_user_json, "create user");
+
+    let JsonBody(new_user) = new_user_json;
 
     let mut vec = STORE.lock().await;
 
-    for user_x in vec.iter() {
-        if user_x.id == new_user.id {
-            tracing::debug!(id = ?new_user.id, "user already exists");
-            return Err(StatusError::bad_request().brief("user already exists"));
-        }
-    }
+    println!("50  {:?}", new_user.email);
+    let new_user = User::insert_user(new_user).await?;
 
-    vec.push(new_user.into_inner());
+    vec.push(new_user);
     Ok(StatusCode::CREATED)
 }
 

@@ -1,14 +1,11 @@
-use crate::db_connectors::get_postgres;
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::http::StatusError;
 use salvo::writing::Json;
-use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
-use sqlx::Row;
 use tokio::sync::Mutex;
 
-use crate::models::client_company::ClientCompany;
+use crate::models::client_company::{ClientCompany, NewClientCompany};
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<ClientCompany>>;
@@ -30,7 +27,7 @@ pub async fn list_clients(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
-    println!("67     list_clients()");
+
     let clients_list = STORE.lock().await;
 
     let clients_list: Vec<ClientCompany> = ClientCompany::get_clients().await?;
@@ -39,23 +36,25 @@ pub async fn list_clients(
 }
 
 /// Create new client company.
-#[endpoint(tags("clients"), status_codes(201, 409))]
+#[endpoint(
+    tags("clients"),
+    status_codes(201, 500)
+)]
 pub async fn create_client_company(
-    new_client_company: JsonBody<ClientCompany>,
-) -> Result<StatusCode, StatusError> {
-    tracing::debug!(client_company = ?new_client_company, "create client_company");
+    new_client_company_json: JsonBody<NewClientCompany>,
+) -> Result<StatusCode, salvo::Error> {
+    tracing::debug!(client_company = ?new_client_company_json, "create client_company");
+
+    let JsonBody(new_client_company) = new_client_company_json;
 
     let mut vec = STORE.lock().await;
 
-    for client_company_x in vec.iter() {
-        if client_company_x.id == new_client_company.id {
-            tracing::debug!(id = ?new_client_company.id, "client_company already exists");
-            return Err(StatusError::bad_request().brief("client_company already exists"));
-        }
-    }
+    println!("50  {:?}", new_client_company.company_name);
+    let new_company = ClientCompany::insert_client(new_client_company).await?;
 
-    vec.push(new_client_company.into_inner());
-    Ok(StatusCode::CREATED)
+    vec.push(new_company);
+
+    std::result::Result::Ok(StatusCode::CREATED)
 }
 
 /// Update existing client company.

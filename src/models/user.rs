@@ -14,6 +14,7 @@ pub struct User {
     pub last_name: String,
     pub email: String,
     pub pass: String,
+    pub role: String,
     pub cv_id_list: Vec<i32>,
     pub date_created: NaiveDateTime,
 }
@@ -42,6 +43,7 @@ impl User {
                 last_name: r.get("lastname"),
                 date_created: r.get("date_created"),
                 email: "".to_owned(),
+                role: "".to_owned(),
                 pass: "".to_owned(),
                 cv_id_list: vec![],
             })
@@ -49,6 +51,24 @@ impl User {
         // println!("{:?}", users_list[0]);
 
         Ok(users_list)
+    }
+
+    pub async fn insert_user(c: NewUser) -> Result<User, Error> {
+        println!("56     insert_user() {:?} {:?}", c, NaiveDateTime::default());
+
+        let query: String = format!("INSERT INTO users (firstname, lastname, email, password, role) VALUES ('{}', '{}', '{}', '{}', '{}')", c.first_name, c.last_name, c.email, c.pass, c.role);
+        println!("59     query {:?}", query);
+
+        let inserted = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute insert query: {:?}", e);
+                anyhow::anyhow!("Failed to insert record")
+            })?;
+
+        Ok(User { id: inserted as i32, first_name: c.first_name, last_name: c.last_name, email: c.email, pass: "".to_string(), date_created: NaiveDateTime::default(), cv_id_list: vec!(), role: c.role })
     }
 }
 
@@ -58,4 +78,5 @@ pub struct NewUser {
     pub last_name: String,
     pub email: String,
     pub pass: String,
+    pub role: String,
 }

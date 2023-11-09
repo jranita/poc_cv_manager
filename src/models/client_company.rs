@@ -19,7 +19,6 @@ use sqlx::types::chrono::NaiveDateTime;
 pub struct ClientCompany {
     pub id: i32,
     pub company_name: String,
-    // pub client_email: String,
     pub date_created: NaiveDateTime,
 }
 
@@ -53,10 +52,11 @@ impl ClientCompany {
         Ok(clients_list)
     }
 
-    pub async fn insert_client(c: NewClientCompany) -> Result<u64, Error> {
-        println!("56     insert_client()");
-                
-        let query: String = format!("INSERT INTO clientcompanies VALUES ({})", c.company_name );
+    pub async fn insert_client(c: NewClientCompany) -> Result<ClientCompany, Error> {
+        println!("56     insert_client() {:?}", c);
+
+        let query: String = format!("INSERT INTO clientcompanies (company_name) VALUES ('{}')", c.company_name );
+        println!("59     quwery {:?}", query);
 
         let inserted = sqlx::query(&query)
             .execute(get_postgres())
@@ -67,11 +67,9 @@ impl ClientCompany {
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
-        Ok(inserted.into())
+        Ok(ClientCompany { id: inserted as i32, company_name: c.company_name, date_created: NaiveDateTime::default() })
     }
 }
-
-
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]
 pub struct NewClientCompany {

@@ -8,6 +8,7 @@ use sqlx::Row;
 use tokio::sync::Mutex;
 
 use crate::models::keyword::Keyword;
+use crate::models::keyword::NewKeyword;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<Keyword>>;
@@ -37,20 +38,18 @@ pub async fn list_keywords(
 }
 
 /// Create new keyword.
-#[endpoint(tags("keywords"), status_codes(201, 409))]
-pub async fn create_keyword(new_keyword: JsonBody<Keyword>) -> Result<StatusCode, StatusError> {
-    tracing::debug!(keyword = ?new_keyword, "create keyword");
+#[endpoint(tags("keywords"), status_codes(201, 500))]
+pub async fn create_keyword(new_keyword_json: JsonBody<NewKeyword>) -> Result<StatusCode, salvo::Error> {
+    tracing::debug!(keyword = ?new_keyword_json, "create keyword");
+
+    let JsonBody(new_keyword) = new_keyword_json;
 
     let mut vec = STORE.lock().await;
 
-    for keyword_x in vec.iter() {
-        if keyword_x.id == new_keyword.id {
-            tracing::debug!(id = ?new_keyword.id, "keyword already exists");
-            return Err(StatusError::bad_request().brief("keyword already exists"));
-        }
-    }
+    println!("50  {:?}", new_keyword.keyword_name);
+    let new_keyword = Keyword::insert_keyword(new_keyword).await?;
 
-    vec.push(new_keyword.into_inner());
+    vec.push(new_keyword);
     Ok(StatusCode::CREATED)
 }
 
