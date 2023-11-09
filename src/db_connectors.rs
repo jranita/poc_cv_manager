@@ -9,7 +9,7 @@ pub async fn create_pg_pool() {
     let pool = PgPool::connect(&database_url)
         .await
         .expect("Failed to create pool.");
-    
+
     PG.set(pool).expect("Postgresql pool must be set")
 }
 
