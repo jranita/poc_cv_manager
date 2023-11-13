@@ -54,9 +54,16 @@ impl User {
     }
 
     pub async fn insert_user(c: NewUser) -> Result<User, Error> {
-        println!("56     insert_user() {:?} {:?}", c, NaiveDateTime::default());
+        println!(
+            "56     insert_user() {:?} {:?}",
+            c,
+            NaiveDateTime::default()
+        );
 
-        let query: String = format!("INSERT INTO users (firstname, lastname, email, password, role) VALUES ('{}', '{}', '{}', '{}', '{}')", c.first_name, c.last_name, c.email, c.pass, c.role);
+        let query: String = format!(
+            "INSERT INTO users (firstname, lastname, email, password, role) VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING id", 
+            c.first_name, c.last_name, c.email, c.pass, c.role
+        );
         println!("59     query {:?}", query);
 
         let inserted = sqlx::query(&query)
@@ -68,7 +75,16 @@ impl User {
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
-        Ok(User { id: inserted as i32, first_name: c.first_name, last_name: c.last_name, email: c.email, pass: "".to_string(), date_created: NaiveDateTime::default(), cv_id_list: vec!(), role: c.role })
+        Ok(User {
+            id: inserted as i32,
+            first_name: c.first_name,
+            last_name: c.last_name,
+            email: c.email,
+            pass: "".to_string(),
+            date_created: NaiveDateTime::default(),
+            cv_id_list: vec![],
+            role: c.role,
+        })
     }
 }
 

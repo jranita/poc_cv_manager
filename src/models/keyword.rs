@@ -45,9 +45,16 @@ impl Keyword {
     }
 
     pub async fn insert_keyword(c: NewKeyword) -> Result<Keyword, Error> {
-        println!("56     insert_keyword() {:?} {:?}", c, NaiveDateTime::default());
+        println!(
+            "56     insert_keyword() {:?} {:?}",
+            c,
+            NaiveDateTime::default()
+        );
 
-        let query: String = format!("INSERT INTO keywords (keyword_name) VALUES ('{}')", c.keyword_name );
+        let query: String = format!(
+            "INSERT INTO keywords (keyword_name) VALUES ('{}') RETURNING id",
+            c.keyword_name
+        );
         println!("59     query {:?}", query);
 
         let inserted = sqlx::query(&query)
@@ -59,9 +66,12 @@ impl Keyword {
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
-        Ok(Keyword { id: inserted as i32, keyword_name: c.keyword_name, date_created: NaiveDateTime::default() })
+        Ok(Keyword {
+            id: inserted as i32,
+            keyword_name: c.keyword_name,
+            date_created: NaiveDateTime::default(),
+        })
     }
-
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

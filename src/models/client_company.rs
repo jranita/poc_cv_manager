@@ -55,7 +55,7 @@ impl ClientCompany {
     pub async fn insert_client(c: NewClientCompany) -> Result<ClientCompany, Error> {
         println!("56     insert_client() {:?}", c);
 
-        let query: String = format!("INSERT INTO clientcompanies (company_name) VALUES ('{}')", c.company_name );
+        let query: String = format!("INSERT INTO clientcompanies (company_name) VALUES ('{}') RETURNING id", c.company_name );
         println!("59     quwery {:?}", query);
 
         let inserted = sqlx::query(&query)
