@@ -1,6 +1,7 @@
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::http::StatusError;
+use salvo::prelude::*;
 use salvo::writing::Json;
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
@@ -27,7 +28,6 @@ pub async fn list_clients(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
-
     let clients_list = STORE.lock().await;
 
     let clients_list: Vec<ClientCompany> = ClientCompany::get_clients().await?;
@@ -35,11 +35,29 @@ pub async fn list_clients(
     std::result::Result::Ok(Json(clients_list))
 }
 
-/// Create new client company.
+/// Client by ID.
 #[endpoint(
     tags("clients"),
-    status_codes(201, 500)
+    status_codes(200, 500),
+    parameters(
+        ("id", description = "Database ID for the client"),
+    )
 )]
+pub async fn get_client_by_id(
+    id: QueryParam<i32, true>,
+) -> Result<Json<ClientCompany>, salvo::Error> {
+    tracing::debug!(id = ?id, "get client company");
+    let mut client = STORE.lock().await;
+
+    let target_client: ClientCompany = ClientCompany::get_client(id.into_inner()).await?;
+
+    client.push(target_client.clone());
+
+    std::result::Result::Ok(Json(target_client))
+}
+
+/// Create new client company.
+#[endpoint(tags("clients"), status_codes(201, 500))]
 pub async fn create_client_company(
     new_client_company_json: JsonBody<NewClientCompany>,
 ) -> Result<StatusCode, salvo::Error> {

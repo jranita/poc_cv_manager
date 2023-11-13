@@ -1,11 +1,11 @@
-use salvo::{
-    prelude::ToSchema,
-    Error
-};
+use salvo::{prelude::ToSchema, Error};
 
-use crate::{models::{Serialize, Deserialize}, db_connectors::get_postgres};
-use sqlx::{FromRow, Type, Row};
+use crate::{
+    db_connectors::get_postgres,
+    models::{Deserialize, Serialize},
+};
 use sqlx::types::chrono::NaiveDateTime;
+use sqlx::{FromRow, Row, Type};
 
 // use crate::{
 //     api::block_no_admin,
@@ -23,15 +23,13 @@ pub struct ClientCompany {
 }
 
 impl ClientCompany {
-
     pub async fn get_clients() -> Result<Vec<ClientCompany>, Error> {
-        println!("28     Get_clients()");
-
         const QUERY: &str = "SELECT id, company_name, date_created from clientcompanies";
 
         let rows = sqlx::query(QUERY)
             .fetch_all(get_postgres())
-            .await.map_err(|e| {
+            .await
+            .map_err(|e| {
                 tracing::error!("Failed to execute query: {:?}", e);
                 anyhow::anyhow!("Failed to execute query")
             })?;
@@ -47,15 +45,40 @@ impl ClientCompany {
                 date_created: r.get("date_created"),
             })
             .collect::<Vec<ClientCompany>>();
-        // println!("{:?}", clients_list[0]);
 
         Ok(clients_list)
+    }
+
+    pub async fn get_client(target_id: i32) -> Result<ClientCompany, Error> {
+        let query_string = format!("SELECT * from clientcompanies where id={}", target_id);
+
+        //TODO use query_as
+        let row = sqlx::query(&query_string)
+            .fetch_one(get_postgres())
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to execute query: {:?}", e);
+                anyhow::anyhow!("Failed to execute query")
+            })?;
+
+        // println!("{:?}", rows[0].columns());
+
+        let client = ClientCompany {
+            id: row.get("id"),
+            company_name: row.get("company_name"),
+            date_created: row.get("date_created"),
+        };
+
+        Ok(client)
     }
 
     pub async fn insert_client(c: NewClientCompany) -> Result<ClientCompany, Error> {
         println!("56     insert_client() {:?}", c);
 
-        let query: String = format!("INSERT INTO clientcompanies (company_name) VALUES ('{}') RETURNING id", c.company_name );
+        let query: String = format!(
+            "INSERT INTO clientcompanies (company_name) VALUES ('{}') RETURNING id",
+            c.company_name
+        );
         println!("59     quwery {:?}", query);
 
         let inserted = sqlx::query(&query)
@@ -67,7 +90,11 @@ impl ClientCompany {
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
-        Ok(ClientCompany { id: inserted as i32, company_name: c.company_name, date_created: NaiveDateTime::default() })
+        Ok(ClientCompany {
+            id: inserted as i32,
+            company_name: c.company_name,
+            date_created: NaiveDateTime::default(),
+        })
     }
 }
 
@@ -75,4 +102,3 @@ impl ClientCompany {
 pub struct NewClientCompany {
     pub company_name: String,
 }
-

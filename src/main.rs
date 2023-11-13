@@ -1,5 +1,6 @@
 use api::clientcompany::{
-    create_client_company, delete_client_company, list_clients, update_client_company,
+    create_client_company, delete_client_company, get_client_by_id, list_clients,
+    update_client_company,
 };
 use api::cv::{create_cv, delete_cv, list_cvs, update_cv};
 use api::fileupload::{upload, uploader};
@@ -34,16 +35,7 @@ async fn main() {
                     .post(create_client_company)
                     .push(
                         Router::with_path("<id>")
-                            .patch(update_client_company)
-                            .delete(delete_client_company),
-                    ),
-            )
-            .push(
-                Router::with_path("clients")
-                    .get(list_clients)
-                    .post(create_client_company)
-                    .push(
-                        Router::with_path("<id>")
+                            .get(get_client_by_id)
                             .patch(update_client_company)
                             .delete(delete_client_company),
                     ),
