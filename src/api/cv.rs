@@ -7,10 +7,9 @@ use salvo::{endpoint, oapi::extract::*};
 use sqlx::Row;
 use tokio::sync::Mutex;
 
+use crate::models::cv::NewCV;
 use crate::models::cv::CV;
 use crate::models::keyword::Keyword;
-
-
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<CV>>;
@@ -40,20 +39,18 @@ pub async fn list_cvs(
 }
 
 /// Create new CV.
-#[endpoint(tags("cvs"), status_codes(201, 409))]
-pub async fn create_cv(new_cv: JsonBody<CV>) -> Result<StatusCode, StatusError> {
-    tracing::debug!(cv = ?new_cv, "create cv");
+#[endpoint(tags("cvs"), status_codes(201, 500))]
+pub async fn create_cv(new_cv_json: JsonBody<NewCV>) -> Result<StatusCode, salvo::Error> {
+    tracing::debug!(cv = ?new_cv_json, "create cv");
+
+    let JsonBody(new_cv) = new_cv_json;
 
     let mut vec = STORE.lock().await;
 
-    for cv_x in vec.iter() {
-        if cv_x.id == new_cv.id {
-            tracing::debug!(id = ?new_cv.id, "cv already exists");
-            return Err(StatusError::bad_request().brief("cv already exists"));
-        }
-    }
-
-    vec.push(new_cv.into_inner());
+    println!("50  {:?}", new_cv.file_name);
+    let new_cv = CV::insert_cv(new_cv).await?;
+    println!("52 new cv  {:?}", new_cv);
+    vec.push(new_cv);
     Ok(StatusCode::CREATED)
 }
 
