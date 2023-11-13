@@ -24,6 +24,8 @@ services:
         SQLX_DATABASES={
           postgres={url=postgres://postgres:postgres@postgres/cv_app_db}
         }
+      - |
+        FILE_PATH=/app/CV_repository
       # - SMTP_HOST=smtp.gmail.com
       # - SMTP_USERNAME=
       # - SMTP_PASSWORD=

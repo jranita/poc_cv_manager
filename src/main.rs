@@ -2,13 +2,14 @@ use api::clientcompany::{
     create_client_company, delete_client_company, list_clients, update_client_company,
 };
 use api::cv::{create_cv, delete_cv, list_cvs, update_cv};
+use api::fileupload::{upload, uploader};
 use api::jobfunction::{
     create_job_function, delete_job_function, list_jobfunctions, update_job_function,
 };
 use api::keyword::{create_keyword, delete_keyword, list_keywords, update_keyword};
 use api::user::{create_user, delete_user, list_users, update_user};
-use salvo::prelude::*;
 use db_connectors::{create_pg_pool, get_postgres};
+use salvo::prelude::*;
 
 pub mod models;
 // use crate::models::*;
@@ -71,6 +72,7 @@ async fn main() {
                 Router::with_path("cvs")
                     .get(list_cvs)
                     .post(create_cv)
+                    .push(Router::with_path("files").get(uploader).post(upload))
                     .push(Router::with_path("<id>").patch(update_cv).delete(delete_cv)),
             )
             .push(
