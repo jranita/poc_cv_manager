@@ -15,7 +15,7 @@ CREATE TABLE cvs (
     file_name text NOT NULL,
     target_companies integer[],
     keyword_list integer[],
-    target_job_function integer[],
+    target_job_functions integer[],
     date_created timestamp without time zone default (now() at time zone('utc'))
 );
 

@@ -14,7 +14,7 @@ CREATE TABLE cvs (
     file_name text,
     cv_list integer[],
     keyword_list varchar[],
-    target_job_function integer[]
+    target_job_functions integer[]
 );
 
 CREATE TABLE jobfunctions (
