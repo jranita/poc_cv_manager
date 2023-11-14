@@ -53,6 +53,34 @@ impl User {
         Ok(users_list)
     }
 
+    pub async fn get_user(target_id: i32) -> Result<User, Error> {
+        let query_string = format!("SELECT * from users where id={}", target_id);
+
+        //TODO use query_as
+        let row = sqlx::query(&query_string)
+            .fetch_one(get_postgres())
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to execute query: {:?}", e);
+                anyhow::anyhow!("Failed to execute query")
+            })?;
+
+        // println!("{:?}", rows[0].columns());
+
+        let user = User {
+            id: row.get("id"),
+            first_name: row.get("firstname"),
+            last_name: row.get("lastname"),
+            date_created: row.get("date_created"),
+            email: row.get("email"),
+            pass: row.get("password"),
+            role: row.get("role"),
+            cv_id_list: row.get("cv_id_list"),
+        };
+
+        Ok(user)
+    }
+
     pub async fn insert_user(c: NewUser) -> Result<User, Error> {
         println!(
             "56     insert_user() {:?} {:?}",

@@ -44,6 +44,29 @@ impl Keyword {
         Ok(keywords_list)
     }
 
+    pub async fn get_keyword(target_id: i32) -> Result<Keyword, Error> {
+        let query_string = format!("SELECT * from keywords where id={}", target_id);
+
+        //TODO use query_as
+        let row = sqlx::query(&query_string)
+            .fetch_one(get_postgres())
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to execute query: {:?}", e);
+                anyhow::anyhow!("Failed to execute query")
+            })?;
+
+        // println!("{:?}", rows[0].columns());
+
+        let keyword = Keyword {
+            id: row.get("id"),
+            keyword_name: row.get("keyword_name"),
+            date_created: row.get("date_created"),
+        };
+
+        Ok(keyword)
+    }
+
     pub async fn insert_keyword(c: NewKeyword) -> Result<Keyword, Error> {
         println!(
             "56     insert_keyword() {:?} {:?}",

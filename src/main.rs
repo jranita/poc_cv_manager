@@ -2,13 +2,14 @@ use api::clientcompany::{
     create_client_company, delete_client_company, get_client_by_id, list_clients,
     update_client_company,
 };
-use api::cv::{create_cv, delete_cv, list_cvs, update_cv};
+use api::cv::{create_cv, delete_cv, get_cv_by_id, list_cvs, update_cv};
 use api::fileupload::{upload, uploader};
 use api::jobfunction::{
-    create_job_function, delete_job_function, list_jobfunctions, update_job_function,
+    create_job_function, delete_job_function, get_job_function_by_id, list_jobfunctions,
+    update_job_function,
 };
-use api::keyword::{create_keyword, delete_keyword, list_keywords, update_keyword};
-use api::user::{create_user, delete_user, list_users, update_user};
+use api::keyword::{create_keyword, delete_keyword, list_keywords, update_keyword, get_keyword_by_id};
+use api::user::{create_user, delete_user, list_users, update_user, get_user_by_id};
 use db_connectors::{create_pg_pool, get_postgres};
 use salvo::prelude::*;
 
@@ -46,6 +47,7 @@ async fn main() {
                     .post(create_keyword)
                     .push(
                         Router::with_path("<id>")
+                            .get(get_keyword_by_id)
                             .patch(update_keyword)
                             .delete(delete_keyword),
                     ),
@@ -56,6 +58,7 @@ async fn main() {
                     .post(create_job_function)
                     .push(
                         Router::with_path("<id>")
+                            .get(get_job_function_by_id)
                             .patch(update_job_function)
                             .delete(delete_job_function),
                     ),
@@ -65,7 +68,12 @@ async fn main() {
                     .get(list_cvs)
                     .post(create_cv)
                     .push(Router::with_path("files").get(uploader).post(upload))
-                    .push(Router::with_path("<id>").patch(update_cv).delete(delete_cv)),
+                    .push(
+                        Router::with_path("<id>")
+                            .get(get_cv_by_id)
+                            .patch(update_cv)
+                            .delete(delete_cv),
+                    ),
             )
             .push(
                 Router::with_path("users")
@@ -73,6 +81,7 @@ async fn main() {
                     .post(create_user)
                     .push(
                         Router::with_path("<id>")
+                            .get(get_user_by_id)
                             .patch(update_user)
                             .delete(delete_user),
                     ),

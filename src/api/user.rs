@@ -15,7 +15,6 @@ pub fn new_store() -> Db {
     Mutex::new(Vec::new())
 }
 
-/// List clients.
 /// List users.
 #[endpoint(
     tags("users"),
@@ -34,6 +33,25 @@ pub async fn list_users(
     let users_list: Vec<User> = User::get_users().await?;
 
     std::result::Result::Ok(Json(users_list))
+}
+
+/// User by ID.
+#[endpoint(
+    tags("users"),
+    status_codes(200, 500),
+    parameters(
+        ("id", description = "Database ID for the User"),
+    )
+)]
+pub async fn get_user_by_id(id: QueryParam<i32, true>) -> Result<Json<User>, salvo::Error> {
+    tracing::debug!(id = ?id, "get User");
+    let mut user = STORE.lock().await;
+
+    let target_user: User = User::get_user(id.into_inner()).await?;
+
+    user.push(target_user.clone());
+
+    std::result::Result::Ok(Json(target_user))
 }
 
 /// Create new user.

@@ -38,6 +38,25 @@ pub async fn list_cvs(
     std::result::Result::Ok(Json(cvs_list))
 }
 
+/// CV by ID.
+#[endpoint(
+    tags("cvs"),
+    status_codes(200, 500),
+    parameters(
+        ("id", description = "Database ID for the CV"),
+    )
+)]
+pub async fn get_cv_by_id(id: QueryParam<i32, true>) -> Result<Json<CV>, salvo::Error> {
+    tracing::debug!(id = ?id, "get CV");
+    let mut cv = STORE.lock().await;
+
+    let target_cv: CV = CV::get_cv(id.into_inner()).await?;
+
+    cv.push(target_cv.clone());
+
+    std::result::Result::Ok(Json(target_cv))
+}
+
 /// Create new CV.
 #[endpoint(tags("cvs"), status_codes(201, 500))]
 pub async fn create_cv(new_cv_json: JsonBody<NewCV>) -> Result<StatusCode, salvo::Error> {

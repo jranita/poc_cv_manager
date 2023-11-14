@@ -37,9 +37,30 @@ pub async fn list_keywords(
     std::result::Result::Ok(Json(keywords_list))
 }
 
+/// Keyword by ID.
+#[endpoint(
+    tags("keywords"),
+    status_codes(200, 500),
+    parameters(
+        ("id", description = "Database ID for the Keyword"),
+    )
+)]
+pub async fn get_keyword_by_id(id: QueryParam<i32, true>) -> Result<Json<Keyword>, salvo::Error> {
+    tracing::debug!(id = ?id, "get Keyword");
+    let mut keyword = STORE.lock().await;
+
+    let target_keyword: Keyword = Keyword::get_keyword(id.into_inner()).await?;
+
+    keyword.push(target_keyword.clone());
+
+    std::result::Result::Ok(Json(target_keyword))
+}
+
 /// Create new keyword.
 #[endpoint(tags("keywords"), status_codes(201, 500))]
-pub async fn create_keyword(new_keyword_json: JsonBody<NewKeyword>) -> Result<StatusCode, salvo::Error> {
+pub async fn create_keyword(
+    new_keyword_json: JsonBody<NewKeyword>,
+) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(keyword = ?new_keyword_json, "create keyword");
 
     let JsonBody(new_keyword) = new_keyword_json;

@@ -37,6 +37,25 @@ pub async fn list_jobfunctions(
     std::result::Result::Ok(Json(jobfunctions_list))
 }
 
+/// Job Function by ID.
+#[endpoint(
+    tags("jobfunctions"),
+    status_codes(200, 500),
+    parameters(
+        ("id", description = "Database ID for the Job Function"),
+    )
+)]
+pub async fn get_job_function_by_id(id: QueryParam<i32, true>) -> Result<Json<JobFunction>, salvo::Error> {
+    tracing::debug!(id = ?id, "get Job Function");
+    let mut job_function = STORE.lock().await;
+
+    let target_job_function: JobFunction = JobFunction::get_job_function(id.into_inner()).await?;
+
+    job_function.push(target_job_function.clone());
+
+    std::result::Result::Ok(Json(target_job_function))
+}
+
 #[endpoint(tags("jobfunctions"), status_codes(201, 500))]
 pub async fn create_job_function(new_job_function_json: JsonBody<NewJobFunction>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(job_function = ?new_job_function_json, "create job_function");

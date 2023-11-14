@@ -45,6 +45,30 @@ impl JobFunction {
         Ok(job_functions_list)
     }
 
+    pub async fn get_job_function(target_id: i32) -> Result<JobFunction, Error> {
+        let query_string = format!("SELECT * from jobfunctions where id={}", target_id);
+
+        //TODO use query_as
+        let row = sqlx::query(&query_string)
+            .fetch_one(get_postgres())
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to execute query: {:?}", e);
+                anyhow::anyhow!("Failed to execute query")
+            })?;
+
+        // println!("{:?}", rows[0].columns());
+
+        let job_function = JobFunction {
+            id: row.get("id"),
+            job_function_name: row.get("job_function_name"),
+            date_created: row.get("date_created"),
+            keyword_list: row.get("keyword_list"),
+        };
+
+        Ok(job_function)
+    }
+
     pub async fn insert_jobfunction(c: NewJobFunction) -> Result<JobFunction, Error> {
         println!(
             "56     insert_jobfunction() {:?} {:?}",

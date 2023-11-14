@@ -47,6 +47,33 @@ impl CV {
         Ok(cvs_list)
     }
 
+    pub async fn get_cv(target_id: i32) -> Result<CV, Error> {
+        let query_string = format!("SELECT * from cvs where id={}", target_id);
+
+        //TODO use query_as
+        let row = sqlx::query(&query_string)
+            .fetch_one(get_postgres())
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to execute query: {:?}", e);
+                anyhow::anyhow!("Failed to execute query")
+            })?;
+
+        // println!("{:?}", rows[0].columns());
+
+        let cv = CV {
+            id: row.get("id"),
+            cv_name: row.get("cv_name"),
+            date_created: row.get("date_created"),
+            file_name: row.get("file_name"),
+            keyword_list: row.get("keyword_list"),
+            target_companies: row.get("target_companies"),
+            target_job_functions: row.get("target_job_functions"),
+        };
+
+        Ok(cv)
+    }
+
     pub async fn insert_cv(c: NewCV) -> Result<CV, Error> {
         println!("52 ======\n {:?} \n=======\n", c);
 
@@ -104,7 +131,7 @@ impl CV {
         //             tracing::error!("Failed to execute insert query: {:?}", e);
         //             anyhow::anyhow!("Failed to insert record")
         //         })?;
-        // } 
+        // }
 
         Ok(CV {
             //TODO find a way to get last_inserted_id() value in Postgres
