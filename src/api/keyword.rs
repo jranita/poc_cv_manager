@@ -75,23 +75,18 @@ pub async fn create_keyword(
 }
 
 /// Update existing keyword.
-#[endpoint(tags("keywords"), status_codes(200, 404))]
-pub async fn update_keyword(
-    id: PathParam<i32>,
-    updated: JsonBody<Keyword>,
-) -> Result<StatusCode, StatusError> {
-    tracing::debug!(keyword = ?updated, id = ?id, "update keyword");
+#[endpoint(tags("keywords"), status_codes(200, 500))]
+pub async fn update_keyword(new_values_json: JsonBody<Keyword>) -> Result<StatusCode, Error> {
+    tracing::debug!(keyword = ?new_values_json, "update keyword");
+
+    let JsonBody(new_values) = new_values_json;
+
     let mut vec = STORE.lock().await;
+    let updated_keyword = Keyword::update_keyword(new_values).await?;
 
-    for keyword in vec.iter_mut() {
-        if keyword.id == *id {
-            *keyword = (*updated).clone();
-            return Ok(StatusCode::OK);
-        }
-    }
+    vec.push(updated_keyword);
 
-    tracing::debug!(id = ?id, "keyword is not found");
-    Err(StatusError::not_found())
+    std::result::Result::Ok(StatusCode::OK)
 }
 
 /// Delete keyword.

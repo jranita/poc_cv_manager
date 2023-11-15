@@ -96,6 +96,35 @@ impl ClientCompany {
             date_created: NaiveDateTime::default(),
         })
     }
+
+    pub async fn update_client(c: ClientCompany) -> Result<ClientCompany, Error> {
+        println!("101     update_client() {:?}", c);
+
+        let query: String = format!(
+            "UPDATE clientcompanies SET company_name='{}' WHERE id='{}'",
+            c.company_name, c.id
+        );
+        println!("108     query {:?}", query);
+
+        let updated = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute update query: {:?}", e);
+                anyhow::anyhow!("Failed to update record")
+            })?;
+
+        // TODO improve error creation/handling
+        if updated == 0 {
+            tracing::error!("Failed update query: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed update query: probably the ID does not exist"
+            )));
+        }
+
+        Ok(c)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

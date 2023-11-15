@@ -8,8 +8,10 @@ use api::jobfunction::{
     create_job_function, delete_job_function, get_job_function_by_id, list_jobfunctions,
     update_job_function,
 };
-use api::keyword::{create_keyword, delete_keyword, list_keywords, update_keyword, get_keyword_by_id};
-use api::user::{create_user, delete_user, list_users, update_user, get_user_by_id};
+use api::keyword::{
+    create_keyword, delete_keyword, get_keyword_by_id, list_keywords, update_keyword,
+};
+use api::user::{create_user, delete_user, get_user_by_id, list_users, update_user};
 use db_connectors::{create_pg_pool, get_postgres};
 use salvo::prelude::*;
 
@@ -40,6 +42,7 @@ async fn main() {
                             .patch(update_client_company)
                             .delete(delete_client_company),
                     ),
+                // .push(Router::with_path("search").post(search_clients)),
             )
             .push(
                 Router::with_path("keywords")
@@ -73,7 +76,7 @@ async fn main() {
                             .get(get_cv_by_id)
                             .patch(update_cv)
                             .delete(delete_cv),
-                    ),
+                    ), // .push(Router::with_path("search").post(search_cvs)),
             )
             .push(
                 Router::with_path("users")

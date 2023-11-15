@@ -3,6 +3,7 @@ use salvo::http::StatusCode;
 use salvo::http::StatusError;
 use salvo::prelude::*;
 use salvo::writing::Json;
+use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
@@ -56,6 +57,25 @@ pub async fn get_client_by_id(
     std::result::Result::Ok(Json(target_client))
 }
 
+/// Find Clients by name.
+// #[endpoint(
+//     tags("clients"),
+//     status_codes(200, 500),
+//     parameters(
+//         ("search_string", description = "string in client name"),
+//     )
+// )]
+// pub async fn search_clients(
+//     search_string: JsonBody<String>,
+// ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
+//     tracing::debug!(search_string = ?search_string, "search client company");
+//     let mut found_clients = STORE.lock().await;
+
+//     let found_clients: Vec<ClientCompany> = ClientCompany::search_clients(search_string).await?;
+
+//     std::result::Result::Ok(Json(found_clients))
+// }
+
 /// Create new client company.
 #[endpoint(tags("clients"), status_codes(201, 500))]
 pub async fn create_client_company(
@@ -76,23 +96,24 @@ pub async fn create_client_company(
 }
 
 /// Update existing client company.
-#[endpoint(tags("clients"), status_codes(200, 404))]
+#[endpoint(tags("clients"), status_codes(200, 500))]
 pub async fn update_client_company(
-    id: PathParam<i32>,
-    updated: JsonBody<ClientCompany>,
-) -> Result<StatusCode, StatusError> {
-    tracing::debug!(client_company = ?updated, id = ?id, "update client_company");
+    new_values_json: JsonBody<ClientCompany>,
+) -> Result<StatusCode, Error> {
+    tracing::debug!(client_company = ?new_values_json, "update client_company");
+
+    let JsonBody(new_values) = new_values_json;
+
     let mut vec = STORE.lock().await;
+    let updated_company = ClientCompany::update_client(new_values).await?;
+    // .map_err(|e| {
+    //     tracing::error!("Failed to execute query: {:?}", e);
+    //     anyhow::anyhow!("Failed to execute query")
+    // })?;
 
-    for client_company in vec.iter_mut() {
-        if client_company.id == *id {
-            *client_company = (*updated).clone();
-            return Ok(StatusCode::OK);
-        }
-    }
+    vec.push(updated_company);
 
-    tracing::debug!(id = ?id, "client company is not found");
-    Err(StatusError::not_found())
+    std::result::Result::Ok(StatusCode::OK)
 }
 
 /// Delete client_company.

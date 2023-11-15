@@ -45,7 +45,9 @@ pub async fn list_jobfunctions(
         ("id", description = "Database ID for the Job Function"),
     )
 )]
-pub async fn get_job_function_by_id(id: QueryParam<i32, true>) -> Result<Json<JobFunction>, salvo::Error> {
+pub async fn get_job_function_by_id(
+    id: QueryParam<i32, true>,
+) -> Result<Json<JobFunction>, salvo::Error> {
     tracing::debug!(id = ?id, "get Job Function");
     let mut job_function = STORE.lock().await;
 
@@ -57,7 +59,9 @@ pub async fn get_job_function_by_id(id: QueryParam<i32, true>) -> Result<Json<Jo
 }
 
 #[endpoint(tags("jobfunctions"), status_codes(201, 500))]
-pub async fn create_job_function(new_job_function_json: JsonBody<NewJobFunction>) -> Result<StatusCode, salvo::Error> {
+pub async fn create_job_function(
+    new_job_function_json: JsonBody<NewJobFunction>,
+) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(job_function = ?new_job_function_json, "create job_function");
 
     let JsonBody(new_job_function) = new_job_function_json;
@@ -72,23 +76,20 @@ pub async fn create_job_function(new_job_function_json: JsonBody<NewJobFunction>
 }
 
 /// Update existing job function.
-#[endpoint(tags("jobfunctions"), status_codes(200, 404))]
+#[endpoint(tags("jobfunctions"), status_codes(200, 500))]
 pub async fn update_job_function(
-    id: PathParam<i32>,
-    updated: JsonBody<JobFunction>,
-) -> Result<StatusCode, StatusError> {
-    tracing::debug!(job_function = ?updated, id = ?id, "update job_function");
+    new_values_json: JsonBody<JobFunction>,
+) -> Result<StatusCode, Error> {
+    tracing::debug!(job_function = ?new_values_json, "update job function");
+
+    let JsonBody(new_values) = new_values_json;
+
     let mut vec = STORE.lock().await;
+    let updated_job_function = JobFunction::update_jobfunction(new_values).await?;
 
-    for job_function in vec.iter_mut() {
-        if job_function.id == *id {
-            *job_function = (*updated).clone();
-            return Ok(StatusCode::OK);
-        }
-    }
+    vec.push(updated_job_function);
 
-    tracing::debug!(id = ?id, "job function is not found");
-    Err(StatusError::not_found())
+    std::result::Result::Ok(StatusCode::OK)
 }
 
 /// Delete job_function.

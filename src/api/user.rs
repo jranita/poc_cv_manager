@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use salvo::Error;
 use salvo::http::StatusCode;
 use salvo::http::StatusError;
 use salvo::writing::Json;
@@ -71,23 +72,18 @@ pub async fn create_user(new_user_json: JsonBody<NewUser>) -> Result<StatusCode,
 }
 
 /// Update existing user.
-#[endpoint(tags("users"), status_codes(200, 404))]
-pub async fn update_user(
-    id: PathParam<i32>,
-    updated: JsonBody<User>,
-) -> Result<StatusCode, StatusError> {
-    tracing::debug!(user = ?updated, id = ?id, "update user");
+#[endpoint(tags("users"), status_codes(200, 500))]
+pub async fn update_user(new_values_json: JsonBody<User>) -> Result<StatusCode, Error> {
+    tracing::debug!(user = ?new_values_json, "update user");
+
+    let JsonBody(new_values) = new_values_json;
+
     let mut vec = STORE.lock().await;
+    let updated_user = User::update_user(new_values).await?;
 
-    for user in vec.iter_mut() {
-        if user.id == *id {
-            *user = (*updated).clone();
-            return Ok(StatusCode::OK);
-        }
-    }
+    vec.push(updated_user);
 
-    tracing::debug!(id = ?id, "user is not found");
-    Err(StatusError::not_found())
+    std::result::Result::Ok(StatusCode::OK)
 }
 
 /// Delete user.

@@ -144,6 +144,60 @@ impl CV {
             target_job_functions: c.target_job_functions,
         })
     }
+
+    pub async fn update_cv(c: CV) -> Result<CV, Error> {
+        println!("101     update_cv() {:?}", c);
+
+        let keywords: String = "{".to_owned()
+            + &c.keyword_list
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+            + "}";
+
+        let jobfunctions: String = "{".to_owned()
+            + &c.target_job_functions
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+            + "}";
+
+        // TODO implement a Vec<i32> to "sql query string array" function
+        let targetcompanies: String = "{".to_owned()
+            + &c.target_companies
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+            + "}";
+
+        let query: String = format!(
+            "UPDATE cvs SET cv_name='{}', file_name='{}', keyword_list='{}', target_companies='{}', target_job_functions='{}' WHERE id='{}'",
+            c.cv_name, c.file_name, keywords, targetcompanies, jobfunctions, c.id
+        );
+        println!("179     query {:?}", query);
+
+        let updated = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute update query: {:?}", e);
+                anyhow::anyhow!("Failed to update record")
+            })?;
+
+        // TODO improve error creation/handling
+        if updated == 0 {
+            tracing::error!("Failed update query: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed update query: probably the ID does not exist"
+            )));
+        }
+
+        Ok(c)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

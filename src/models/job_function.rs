@@ -103,6 +103,43 @@ impl JobFunction {
             date_created: NaiveDateTime::default(),
         })
     }
+
+    pub async fn update_jobfunction(c: JobFunction) -> Result<JobFunction, Error> {
+        println!("101     update_jobfunction() {:?}", c);
+
+        let keywords: String = "{".to_owned()
+            + &c.keyword_list
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+            + "}";
+
+        let query: String = format!(
+            "UPDATE jobfunctions SET job_function_name='{}', keyword_list='{}' WHERE id='{}'",
+            c.job_function_name, keywords, c.id
+        );
+        println!("122     query {:?}", query);
+
+        let updated = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute update query: {:?}", e);
+                anyhow::anyhow!("Failed to update record")
+            })?;
+
+        // TODO improve error creation/handling
+        if updated == 0 {
+            tracing::error!("Failed update query: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed update query: probably the ID does not exist"
+            )));
+        }
+
+        Ok(c)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

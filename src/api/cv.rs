@@ -73,24 +73,19 @@ pub async fn create_cv(new_cv_json: JsonBody<NewCV>) -> Result<StatusCode, salvo
     Ok(StatusCode::CREATED)
 }
 
-/// Update existing CV.
-#[endpoint(tags("cvs"), status_codes(200, 404))]
-pub async fn update_cv(
-    id: PathParam<i32>,
-    updated: JsonBody<CV>,
-) -> Result<StatusCode, StatusError> {
-    tracing::debug!(cv = ?updated, id = ?id, "update cv");
+/// Update existing cv.
+#[endpoint(tags("cvs"), status_codes(200, 500))]
+pub async fn update_cv(new_values_json: JsonBody<CV>) -> Result<StatusCode, Error> {
+    tracing::debug!(cv = ?new_values_json, "update cv");
+
+    let JsonBody(new_values) = new_values_json;
+
     let mut vec = STORE.lock().await;
+    let updated_cv = CV::update_cv(new_values).await?;
 
-    for cv in vec.iter_mut() {
-        if cv.id == *id {
-            *cv = (*updated).clone();
-            return Ok(StatusCode::OK);
-        }
-    }
+    vec.push(updated_cv);
 
-    tracing::debug!(id = ?id, "CV is not found");
-    Err(StatusError::not_found())
+    std::result::Result::Ok(StatusCode::OK)
 }
 
 /// Delete cv.

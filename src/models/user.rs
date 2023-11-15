@@ -114,6 +114,43 @@ impl User {
             role: c.role,
         })
     }
+
+    pub async fn update_user(c: User) -> Result<User, Error> {
+        println!("101     update_user() {:?}", c);
+
+        let cvs: String = "{".to_owned()
+            + &c.cv_id_list
+                .iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+            + "}";
+
+        let query: String = format!(
+            "UPDATE users SET firstname='{}', lastname='{}', email='{}' password='{}' role='{}' cv_id_list='{}' WHERE id='{}'",
+            c.first_name, c.last_name, c.email, c.pass, c.role, cvs, c.id
+        );
+        println!("133     query {:?}", query);
+
+        let updated = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute update query: {:?}", e);
+                anyhow::anyhow!("Failed to update record")
+            })?;
+
+        // TODO improve error creation/handling
+        if updated == 0 {
+            tracing::error!("Failed update query: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed update query: probably the ID does not exist"
+            )));
+        }
+
+        Ok(c)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]
