@@ -151,6 +151,43 @@ impl User {
 
         Ok(c)
     }
+
+    pub async fn delete_user(id: i32) -> Result<User, Error> {
+        println!("130     delete_user() {:?}", id);
+
+        let query: String = format!("DELETE FROM users WHERE id='{}'", id);
+        println!("133     query {:?}", query);
+
+        let deleted = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute delete query: {:?}", e);
+                anyhow::anyhow!("Failed to delete record")
+            })?;
+
+        // TODO improve error creation/handling
+        if deleted == 0 {
+            tracing::error!("Failed delete record: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed delete query: probably the ID does not exist"
+            )));
+        }
+
+        let ccc = User {
+            id,
+            date_created: NaiveDateTime::default(),
+            first_name: "first_name".to_string(),
+            last_name: "last_name".to_string(),
+            email: "last_name".to_string(),
+            pass: "last_name".to_string(),
+            role: "last_name".to_string(),
+            cv_id_list: vec![],
+        };
+
+        Ok(ccc)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

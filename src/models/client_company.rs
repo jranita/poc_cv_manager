@@ -125,6 +125,38 @@ impl ClientCompany {
 
         Ok(c)
     }
+
+    pub async fn delete_client(id: i32) -> Result<ClientCompany, Error> {
+        println!("130     delete_client() {:?}", id);
+
+        let query: String = format!("DELETE FROM clientcompanies WHERE id='{}'", id);
+        println!("133     query {:?}", query);
+
+        let deleted = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute delete query: {:?}", e);
+                anyhow::anyhow!("Failed to delete record")
+            })?;
+
+        // TODO improve error creation/handling
+        if deleted == 0 {
+            tracing::error!("Failed delete record: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed update query: probably the ID does not exist"
+            )));
+        }
+
+        let ccc = ClientCompany {
+            id,
+            company_name: "company_name".to_string(),
+            date_created: NaiveDateTime::default(),
+        };
+
+        Ok(ccc)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

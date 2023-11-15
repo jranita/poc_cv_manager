@@ -1,7 +1,6 @@
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::http::StatusError;
-use salvo::prelude::*;
 use salvo::writing::Json;
 use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
@@ -118,19 +117,25 @@ pub async fn update_client_company(
 
 /// Delete client_company.
 #[endpoint(tags("clients"), status_codes(200, 401, 404))]
-pub async fn delete_client_company(id: PathParam<i32>) -> Result<StatusCode, StatusError> {
+pub async fn delete_client_company(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete client company");
 
     let mut vec = STORE.lock().await;
 
-    let len = vec.len();
-    vec.retain(|client_company| client_company.id != *id);
+    // let len = vec.len();
+    // vec.retain(|client_company| client_company.id != *id);
 
-    let deleted = vec.len() != len;
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        tracing::debug!(id = ?id, "client company is not found");
-        Err(StatusError::not_found())
-    }
+    // let deleted = vec.len() != len;
+    // if deleted {
+    //     Ok(StatusCode::NO_CONTENT)
+    // } else {
+    //     tracing::debug!(id = ?id, "client company is not found");
+    //     Err(StatusError::not_found())
+    // }
+    let deleted_company = ClientCompany::delete_client(id.into_inner())
+        .await?;
+        // .map_err(|e| Err(StatusError::not_found()))?;
+
+    vec.push(deleted_company);
+    std::result::Result::Ok(StatusCode::OK)
 }

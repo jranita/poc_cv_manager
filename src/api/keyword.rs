@@ -4,7 +4,6 @@ use salvo::http::StatusError;
 use salvo::writing::Json;
 use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
-use sqlx::Row;
 use tokio::sync::Mutex;
 
 use crate::models::keyword::Keyword;
@@ -89,21 +88,15 @@ pub async fn update_keyword(new_values_json: JsonBody<Keyword>) -> Result<Status
     std::result::Result::Ok(StatusCode::OK)
 }
 
-/// Delete keyword.
+/// Delete Keyword.
 #[endpoint(tags("keywords"), status_codes(200, 401, 404))]
-pub async fn delete_keyword(id: PathParam<i32>) -> Result<StatusCode, StatusError> {
+pub async fn delete_keyword(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete keyword");
 
     let mut vec = STORE.lock().await;
 
-    let len = vec.len();
-    vec.retain(|keyword| keyword.id != *id);
+    let deleted_company = Keyword::delete_keyword(id.into_inner()).await?;
 
-    let deleted = vec.len() != len;
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        tracing::debug!(id = ?id, "keyword is not found");
-        Err(StatusError::not_found())
-    }
+    vec.push(deleted_company);
+    std::result::Result::Ok(StatusCode::OK)
 }

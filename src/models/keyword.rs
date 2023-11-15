@@ -124,6 +124,38 @@ impl Keyword {
 
         Ok(c)
     }
+
+    pub async fn delete_keyword(id: i32) -> Result<Keyword, Error> {
+        println!("130     delete_keyword() {:?}", id);
+
+        let query: String = format!("DELETE FROM keywords WHERE id='{}'", id);
+        println!("133     query {:?}", query);
+
+        let deleted = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute delete query: {:?}", e);
+                anyhow::anyhow!("Failed to delete record")
+            })?;
+
+        // TODO improve error creation/handling
+        if deleted == 0 {
+            tracing::error!("Failed delete record: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed delete query: probably the ID does not exist"
+            )));
+        }
+
+        let ccc = Keyword {
+            id,
+            date_created: NaiveDateTime::default(),
+            keyword_name: "company_name".to_string(),
+        };
+
+        Ok(ccc)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

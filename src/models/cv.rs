@@ -198,6 +198,42 @@ impl CV {
 
         Ok(c)
     }
+
+    pub async fn delete_cv(id: i32) -> Result<CV, Error> {
+        println!("130     delete_cv() {:?}", id);
+
+        let query: String = format!("DELETE FROM cvs WHERE id='{}'", id);
+        println!("133     query {:?}", query);
+
+        let deleted = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute delete query: {:?}", e);
+                anyhow::anyhow!("Failed to delete record")
+            })?;
+
+        // TODO improve error creation/handling
+        if deleted == 0 {
+            tracing::error!("Failed delete record: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed delete query: probably the ID does not exist"
+            )));
+        }
+
+        let ccc = CV {
+            id,
+            date_created: NaiveDateTime::default(),
+            cv_name: "company_name".to_string(),
+            file_name: "company_name".to_string(),
+            keyword_list: vec![],
+            target_companies: vec![],
+            target_job_functions: vec![],
+        };
+
+        Ok(ccc)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]

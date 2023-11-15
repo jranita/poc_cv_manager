@@ -92,21 +92,15 @@ pub async fn update_job_function(
     std::result::Result::Ok(StatusCode::OK)
 }
 
-/// Delete job_function.
+/// Delete job function.
 #[endpoint(tags("jobfunctions"), status_codes(200, 401, 404))]
-pub async fn delete_job_function(id: PathParam<i32>) -> Result<StatusCode, StatusError> {
+pub async fn delete_job_function(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete job function");
 
     let mut vec = STORE.lock().await;
 
-    let len = vec.len();
-    vec.retain(|job_function| job_function.id != *id);
+    let deleted_job_function = JobFunction::delete_jobfunction(id.into_inner()).await?;
 
-    let deleted = vec.len() != len;
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        tracing::debug!(id = ?id, "job function is not found");
-        Err(StatusError::not_found())
-    }
+    vec.push(deleted_job_function);
+    std::result::Result::Ok(StatusCode::OK)
 }

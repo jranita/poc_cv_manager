@@ -4,7 +4,6 @@ use salvo::http::StatusError;
 use salvo::writing::Json;
 use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
-use sqlx::Row;
 use tokio::sync::Mutex;
 
 use crate::models::cv::NewCV;
@@ -88,21 +87,15 @@ pub async fn update_cv(new_values_json: JsonBody<CV>) -> Result<StatusCode, Erro
     std::result::Result::Ok(StatusCode::OK)
 }
 
-/// Delete cv.
+/// Delete CV.
 #[endpoint(tags("cvs"), status_codes(200, 401, 404))]
-pub async fn delete_cv(id: PathParam<i32>) -> Result<StatusCode, StatusError> {
-    tracing::debug!(id = ?id, "delete CV");
+pub async fn delete_cv(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
+    tracing::debug!(id = ?id, "delete cv");
 
     let mut vec = STORE.lock().await;
 
-    let len = vec.len();
-    vec.retain(|cv| cv.id != *id);
+    let deleted_company = CV::delete_cv(id.into_inner()).await?;
 
-    let deleted = vec.len() != len;
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        tracing::debug!(id = ?id, "CV is not found");
-        Err(StatusError::not_found())
-    }
+    vec.push(deleted_company);
+    std::result::Result::Ok(StatusCode::OK)
 }

@@ -1,8 +1,8 @@
 use once_cell::sync::Lazy;
-use salvo::Error;
 use salvo::http::StatusCode;
 use salvo::http::StatusError;
 use salvo::writing::Json;
+use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
@@ -86,21 +86,15 @@ pub async fn update_user(new_values_json: JsonBody<User>) -> Result<StatusCode, 
     std::result::Result::Ok(StatusCode::OK)
 }
 
-/// Delete user.
+/// Delete User.
 #[endpoint(tags("users"), status_codes(200, 401, 404))]
-pub async fn delete_user(id: PathParam<i32>) -> Result<StatusCode, StatusError> {
+pub async fn delete_user(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete user");
 
     let mut vec = STORE.lock().await;
 
-    let len = vec.len();
-    vec.retain(|user| user.id != *id);
+    let deleted_company = User::delete_user(id.into_inner()).await?;
 
-    let deleted = vec.len() != len;
-    if deleted {
-        Ok(StatusCode::NO_CONTENT)
-    } else {
-        tracing::debug!(id = ?id, "user is not found");
-        Err(StatusError::not_found())
-    }
+    vec.push(deleted_company);
+    std::result::Result::Ok(StatusCode::OK)
 }
