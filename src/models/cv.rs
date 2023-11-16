@@ -2,7 +2,7 @@ use salvo::{hyper::body::Bytes, oapi::RequestBody, prelude::ToSchema, Error};
 
 use crate::{
     db_connectors::get_postgres,
-    models::{Deserialize, Serialize, number_vec_to_string},
+    models::{number_vec_to_string, Deserialize, Serialize},
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -86,15 +86,14 @@ impl CV {
         let targetcompanies: String = number_vec_to_string(&c.target_companies);
 
         let query: String = format!(
-            "INSERT INTO cvs (cv_name, file_name, target_companies, keyword_list, target_job_functions) VALUES ('{}', '{}','{}','{}','{}') RETURNING id",
+            "INSERT INTO cvs (cv_name, file_name, target_companies, keyword_list, target_job_functions) VALUES ('{}', '{}','{}','{}','{}') RETURNING *",
             c.cv_name, c.file_name, targetcompanies, keywords, jobfunctions
         );
         println!("59     query {:?}", query);
 
         let mut inserted = sqlx::query(&query)
-            .execute(get_postgres())
+            .fetch_one(get_postgres())
             .await
-            .map(|r| r.rows_affected())
             .map_err(|e| {
                 tracing::error!("Failed to execute insert query: {:?}", e);
                 anyhow::anyhow!("Failed to insert record")
@@ -116,14 +115,13 @@ impl CV {
         // }
 
         Ok(CV {
-            //TODO find a way to get last_inserted_id() value in Postgres
-            id: inserted as i32,
-            cv_name: c.cv_name,
-            date_created: NaiveDateTime::default(),
-            file_name: c.file_name,
-            keyword_list: c.keyword_list,
-            target_companies: c.target_companies,
-            target_job_functions: c.target_job_functions,
+            id: inserted.get("id"),
+            cv_name: inserted.get("cv_name"),
+            date_created: inserted.get("date_created"),
+            file_name: inserted.get("file_name"),
+            keyword_list: inserted.get("keyword_list"),
+            target_companies: inserted.get("target_companies"),
+            target_job_functions: inserted.get("target_job_functions"),
         })
     }
 

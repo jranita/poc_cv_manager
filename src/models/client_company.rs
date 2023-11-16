@@ -23,7 +23,7 @@ pub struct ClientCompany {
 }
 
 impl ClientCompany {
-    pub async fn get_clients() -> Result<Vec<ClientCompany>, Error> {
+    pub async fn get_clients(_limit: usize, _offset: usize) -> Result<Vec<ClientCompany>, Error> {
         const QUERY: &str = "SELECT id, company_name, date_created from clientcompanies";
 
         let rows = sqlx::query(QUERY)
@@ -76,24 +76,23 @@ impl ClientCompany {
         println!("56     insert_client() {:?}", c);
 
         let query: String = format!(
-            "INSERT INTO clientcompanies (company_name) VALUES ('{}') RETURNING id",
+            "INSERT INTO clientcompanies (company_name) VALUES ('{}') RETURNING *",
             c.company_name
         );
         println!("59     quwery {:?}", query);
 
         let inserted = sqlx::query(&query)
-            .execute(get_postgres())
+            .fetch_one(get_postgres())
             .await
-            .map(|r| r.rows_affected())
             .map_err(|e| {
                 tracing::error!("Failed to execute insert query: {:?}", e);
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
         Ok(ClientCompany {
-            id: inserted as i32,
-            company_name: c.company_name,
-            date_created: NaiveDateTime::default(),
+            id: inserted.get("id"),
+            company_name: inserted.get("company_name"),
+            date_created: inserted.get("date_created"),
         })
     }
 

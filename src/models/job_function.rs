@@ -78,23 +78,22 @@ impl JobFunction {
 
         let keywords: String = number_vec_to_string(&c.keyword_list);
 
-        let query: String = format!("INSERT INTO jobfunctions (job_function_name, keyword_list) VALUES ('{}', '{}') RETURNING id", c.job_function_name, keywords );
+        let query: String = format!("INSERT INTO jobfunctions (job_function_name, keyword_list) VALUES ('{}', '{}') RETURNING *", c.job_function_name, keywords );
         println!("59     query {:?}", query);
 
         let inserted = sqlx::query(&query)
-            .execute(get_postgres())
+            .fetch_one(get_postgres())
             .await
-            .map(|r| r.rows_affected())
             .map_err(|e| {
                 tracing::error!("Failed to execute insert query: {:?}", e);
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
         Ok(JobFunction {
-            id: inserted as i32,
-            job_function_name: c.job_function_name,
-            keyword_list: c.keyword_list,
-            date_created: NaiveDateTime::default(),
+            id: inserted.get("id"),
+            job_function_name: inserted.get("job_function_name"),
+            keyword_list: inserted.get("keyword_list"),
+            date_created: inserted.get("date_created"),
         })
     }
 

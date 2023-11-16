@@ -75,24 +75,23 @@ impl Keyword {
         );
 
         let query: String = format!(
-            "INSERT INTO keywords (keyword_name) VALUES ('{}') RETURNING id",
+            "INSERT INTO keywords (keyword_name) VALUES ('{}') RETURNING *",
             c.keyword_name
         );
         println!("59     query {:?}", query);
 
         let inserted = sqlx::query(&query)
-            .execute(get_postgres())
+            .fetch_one(get_postgres())
             .await
-            .map(|r| r.rows_affected())
             .map_err(|e| {
                 tracing::error!("Failed to execute insert query: {:?}", e);
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
         Ok(Keyword {
-            id: inserted as i32,
-            keyword_name: c.keyword_name,
-            date_created: NaiveDateTime::default(),
+            id: inserted.get("id"),
+            keyword_name: inserted.get("keyword_name"),
+            date_created: inserted.get("date_created"),
         })
     }
 

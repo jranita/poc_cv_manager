@@ -89,29 +89,28 @@ impl User {
         );
 
         let query: String = format!(
-            "INSERT INTO users (firstname, lastname, email, password, role) VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING id", 
-            c.first_name, c.last_name, c.email, c.pass, c.role
+            "INSERT INTO users (email, firstname, lastname, password, role) VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING *", 
+            c.email, c.first_name, c.last_name, c.pass, c.role
         );
         println!("59     query {:?}", query);
 
         let inserted = sqlx::query(&query)
-            .execute(get_postgres())
+            .fetch_one(get_postgres())
             .await
-            .map(|r| r.rows_affected())
             .map_err(|e| {
                 tracing::error!("Failed to execute insert query: {:?}", e);
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
         Ok(User {
-            id: inserted as i32,
-            first_name: c.first_name,
-            last_name: c.last_name,
-            email: c.email,
-            pass: "".to_string(),
-            date_created: NaiveDateTime::default(),
-            cv_id_list: vec![],
-            role: c.role,
+            id: inserted.get("id"),
+            first_name: inserted.get("first_name"),
+            last_name: inserted.get("last_name"),
+            email: inserted.get("email"),
+            pass: inserted.get("password"),
+            date_created: inserted.get("date_created"),
+            cv_id_list: inserted.get("cv_id_list"),
+            role: inserted.get("role"),
         })
     }
 

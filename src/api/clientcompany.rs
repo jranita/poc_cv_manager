@@ -1,6 +1,5 @@
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
-use salvo::http::StatusError;
 use salvo::writing::Json;
 use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
@@ -30,7 +29,11 @@ pub async fn list_clients(
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
     let clients_list = STORE.lock().await;
 
-    let clients_list: Vec<ClientCompany> = ClientCompany::get_clients().await?;
+    let query_limit = limit.into_inner().unwrap();
+    let query_offset = offset.into_inner().unwrap();
+
+    let clients_list: Vec<ClientCompany> =
+        ClientCompany::get_clients(query_limit, query_offset).await?;
 
     std::result::Result::Ok(Json(clients_list))
 }
@@ -132,9 +135,8 @@ pub async fn delete_client_company(id: PathParam<i32>) -> Result<StatusCode, sal
     //     tracing::debug!(id = ?id, "client company is not found");
     //     Err(StatusError::not_found())
     // }
-    let deleted_company = ClientCompany::delete_client(id.into_inner())
-        .await?;
-        // .map_err(|e| Err(StatusError::not_found()))?;
+    let deleted_company = ClientCompany::delete_client(id.into_inner()).await?;
+    // .map_err(|e| Err(StatusError::not_found()))?;
 
     vec.push(deleted_company);
     std::result::Result::Ok(StatusCode::OK)
