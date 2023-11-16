@@ -5,3 +5,13 @@ pub mod keyword;
 pub mod user;
 
 use serde::{Deserialize, Serialize};
+
+pub fn number_vec_to_string(vector: &Vec<i32>) -> String {
+    return "{".to_owned()
+        + &vector
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(",")
+        + "}";
+}

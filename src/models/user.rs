@@ -2,7 +2,7 @@ use salvo::{prelude::ToSchema, Error};
 
 use crate::{
     db_connectors::get_postgres,
-    models::{Deserialize, Serialize},
+    models::{number_vec_to_string, Deserialize, Serialize},
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -118,14 +118,7 @@ impl User {
     pub async fn update_user(c: User) -> Result<User, Error> {
         println!("101     update_user() {:?}", c);
 
-        let cvs: String = "{".to_owned()
-            + &c.cv_id_list
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
-
+        let cvs: String = number_vec_to_string(&c.cv_id_list);
         let query: String = format!(
             "UPDATE users SET firstname='{}', lastname='{}', email='{}' password='{}' role='{}' cv_id_list='{}' WHERE id='{}'",
             c.first_name, c.last_name, c.email, c.pass, c.role, cvs, c.id

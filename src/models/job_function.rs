@@ -2,7 +2,7 @@ use salvo::{prelude::ToSchema, Error};
 
 use crate::{
     db_connectors::get_postgres,
-    models::{Deserialize, Serialize},
+    models::{Deserialize, Serialize, number_vec_to_string},
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -76,13 +76,7 @@ impl JobFunction {
             NaiveDateTime::default()
         );
 
-        let keywords: String = "{".to_owned()
-            + &c.keyword_list
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let keywords: String = number_vec_to_string(&c.keyword_list);
 
         let query: String = format!("INSERT INTO jobfunctions (job_function_name, keyword_list) VALUES ('{}', '{}') RETURNING id", c.job_function_name, keywords );
         println!("59     query {:?}", query);
@@ -107,13 +101,7 @@ impl JobFunction {
     pub async fn update_jobfunction(c: JobFunction) -> Result<JobFunction, Error> {
         println!("101     update_jobfunction() {:?}", c);
 
-        let keywords: String = "{".to_owned()
-            + &c.keyword_list
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let keywords: String = number_vec_to_string(&c.keyword_list);
 
         let query: String = format!(
             "UPDATE jobfunctions SET job_function_name='{}', keyword_list='{}' WHERE id='{}'",

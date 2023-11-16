@@ -2,7 +2,7 @@ use salvo::{hyper::body::Bytes, oapi::RequestBody, prelude::ToSchema, Error};
 
 use crate::{
     db_connectors::get_postgres,
-    models::{Deserialize, Serialize},
+    models::{Deserialize, Serialize, number_vec_to_string},
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -79,29 +79,11 @@ impl CV {
 
         println!("56     insert_cv() {:?} {:?}", c, NaiveDateTime::default());
 
-        let keywords: String = "{".to_owned()
-            + &c.keyword_list
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let keywords: String = number_vec_to_string(&c.keyword_list);
 
-        let jobfunctions: String = "{".to_owned()
-            + &c.target_job_functions
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let jobfunctions: String = number_vec_to_string(&c.target_job_functions);
 
-        let targetcompanies: String = "{".to_owned()
-            + &c.target_companies
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let targetcompanies: String = number_vec_to_string(&c.target_companies);
 
         let query: String = format!(
             "INSERT INTO cvs (cv_name, file_name, target_companies, keyword_list, target_job_functions) VALUES ('{}', '{}','{}','{}','{}') RETURNING id",
@@ -148,30 +130,11 @@ impl CV {
     pub async fn update_cv(c: CV) -> Result<CV, Error> {
         println!("101     update_cv() {:?}", c);
 
-        let keywords: String = "{".to_owned()
-            + &c.keyword_list
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let keywords: String = number_vec_to_string(&c.keyword_list);
 
-        let jobfunctions: String = "{".to_owned()
-            + &c.target_job_functions
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let jobfunctions: String = number_vec_to_string(&c.target_job_functions);
 
-        // TODO implement a Vec<i32> to "sql query string array" function
-        let targetcompanies: String = "{".to_owned()
-            + &c.target_companies
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(",")
-            + "}";
+        let targetcompanies: String = number_vec_to_string(&c.target_companies);
 
         let query: String = format!(
             "UPDATE cvs SET cv_name='{}', file_name='{}', keyword_list='{}', target_companies='{}', target_job_functions='{}' WHERE id='{}'",
