@@ -12,6 +12,7 @@ CREATE TABLE users (
 CREATE TABLE cvs (
     id serial PRIMARY KEY,
     cv_name text NOT NULL,
+    -- user_id integer, TODO delete cv_id_list from users
     file_name text NOT NULL,
     target_companies integer[],
     keyword_list integer[],
@@ -21,19 +22,19 @@ CREATE TABLE cvs (
 
 CREATE TABLE jobfunctions (
     id serial PRIMARY KEY,
-    job_function_name text NOT NULL,
+    job_function_name text NOT NULL UNIQUE,
     keyword_list integer[],
     date_created timestamp without time zone default (now() at time zone('utc'))
 );
 
 CREATE TABLE keywords (
     id serial PRIMARY KEY,
-    keyword_name text NOT NULL,
+    keyword_name text NOT NULL UNIQUE,
     date_created timestamp without time zone default (now() at time zone('utc'))
 );
 
 CREATE TABLE clientcompanies (
     id serial PRIMARY KEY,
-    company_name text NOT NULL,
+    company_name text NOT NULL UNIQUE,
     date_created timestamp without time zone default (now() at time zone('utc'))
 );
