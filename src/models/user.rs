@@ -45,7 +45,7 @@ impl User {
                 email: "".to_owned(),
                 role: "".to_owned(),
                 pass: "".to_owned(),
-                cv_id_list: vec![],
+                cv_id_list: r.get("cv_id_list"),
             })
             .collect::<Vec<User>>();
         // println!("{:?}", users_list[0]);
@@ -109,7 +109,7 @@ impl User {
             email: inserted.get("email"),
             pass: inserted.get("password"),
             date_created: inserted.get("date_created"),
-            cv_id_list: vec![],
+            cv_id_list: inserted.get("cv_id_list"),
             role: inserted.get("role"),
         })
     }

@@ -4,7 +4,7 @@ CREATE TABLE users (
     lastname varchar NOT NULL,
     email varchar NOT NULL UNIQUE,
     password varchar NOT NULL,
-    cv_id_list integer[],
+    cv_id_list integer[] DEFAULT array[]::integer[],
     role varchar NOT NULL,
     date_created timestamp without time zone default (now() at time zone('utc'))
 );
@@ -12,18 +12,18 @@ CREATE TABLE users (
 CREATE TABLE cvs (
     id serial PRIMARY KEY,
     cv_name text NOT NULL,
-    -- user_id integer, TODO delete cv_id_list from users
     file_name text NOT NULL,
-    target_companies integer[],
-    keyword_list integer[],
-    target_job_functions integer[],
+    user_id integer,
+    target_companies integer[] DEFAULT array[]::integer[],
+    keyword_list integer[] DEFAULT array[]::integer[],
+    target_job_functions integer[] DEFAULT array[]::integer[],
     date_created timestamp without time zone default (now() at time zone('utc'))
 );
 
 CREATE TABLE jobfunctions (
     id serial PRIMARY KEY,
     job_function_name text NOT NULL UNIQUE,
-    keyword_list integer[],
+    keyword_list integer[] DEFAULT array[]::integer[],
     date_created timestamp without time zone default (now() at time zone('utc'))
 );
 

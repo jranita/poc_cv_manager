@@ -1,0 +1,1 @@
+UPDATE users SET cv_id_list = (SELECT COALESCE(array_agg(cvs.id), array[]::integer[]) FROM cvs WHERE users.id = cvs.user_id);
