@@ -10,6 +10,7 @@ use sqlx::{FromRow, Row, Type};
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema, FromRow, Type)]
 pub struct CV {
     pub id: i32,
+    pub user_id: i32,
     pub cv_name: String,
     pub file_name: String,
     pub keyword_list: Vec<i32>,
@@ -34,6 +35,7 @@ impl CV {
             .iter()
             .map(|r| CV {
                 id: r.get("id"),
+                user_id: r.get("user_id"),
                 cv_name: r.get("cv_name"),
                 // date_created: r.get<chrono::Utc>("date_created").date_naive(),
                 date_created: r.get("date_created"),
@@ -63,6 +65,7 @@ impl CV {
 
         let cv = CV {
             id: row.get("id"),
+            user_id: row.get("user_id"),
             cv_name: row.get("cv_name"),
             date_created: row.get("date_created"),
             file_name: row.get("file_name"),
@@ -116,6 +119,7 @@ impl CV {
 
         Ok(CV {
             id: inserted.get("id"),
+            user_id: inserted.get("user_id"),
             cv_name: inserted.get("cv_name"),
             date_created: inserted.get("date_created"),
             file_name: inserted.get("file_name"),
@@ -185,6 +189,7 @@ impl CV {
 
         let ccc = CV {
             id,
+            user_id: 0,
             date_created: NaiveDateTime::default(),
             cv_name: "company_name".to_string(),
             file_name: "company_name".to_string(),
@@ -199,6 +204,7 @@ impl CV {
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]
 pub struct NewCV {
+    pub user_id: i32,
     pub cv_name: String,
     pub file_name: String,
     pub keyword_list: Vec<i32>,
