@@ -89,7 +89,7 @@ impl User {
         );
 
         let query: String = format!(
-            "INSERT INTO users (email, firstname, lastname, password, role) VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING *", 
+            "INSERT INTO users (email, firstname, lastname, password, role) VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING *",
             c.email, c.first_name, c.last_name, c.pass, c.role
         );
         println!("59     query {:?}", query);
@@ -104,12 +104,12 @@ impl User {
 
         Ok(User {
             id: inserted.get("id"),
-            first_name: inserted.get("first_name"),
-            last_name: inserted.get("last_name"),
+            first_name: inserted.get("firstname"),
+            last_name: inserted.get("lastname"),
             email: inserted.get("email"),
             pass: inserted.get("password"),
             date_created: inserted.get("date_created"),
-            cv_id_list: inserted.get("cv_id_list"),
+            cv_id_list: vec![],
             role: inserted.get("role"),
         })
     }
