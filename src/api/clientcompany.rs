@@ -29,11 +29,11 @@ pub async fn list_clients(
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
     let clients_list = STORE.lock().await;
 
-    let query_limit = limit.into_inner().unwrap();
-    let query_offset = offset.into_inner().unwrap();
-
-    let clients_list: Vec<ClientCompany> =
-        ClientCompany::get_clients(query_limit, query_offset).await?;
+    let clients_list: Vec<ClientCompany> = ClientCompany::get_clients(
+        limit.into_inner().unwrap_or_default(),
+        offset.into_inner().unwrap_or_default(),
+    )
+    .await?;
 
     std::result::Result::Ok(Json(clients_list))
 }

@@ -22,9 +22,11 @@ pub struct ClientCompany {
     pub date_created: NaiveDateTime,
 }
 
+// TODO: limit and offset are needed for sorting and pagination
 impl ClientCompany {
     pub async fn get_clients(_limit: usize, _offset: usize) -> Result<Vec<ClientCompany>, Error> {
         const QUERY: &str = "SELECT id, company_name, date_created from clientcompanies";
+
 
         let rows = sqlx::query(QUERY)
             .fetch_all(get_postgres())
@@ -34,7 +36,7 @@ impl ClientCompany {
                 anyhow::anyhow!("Failed to execute query")
             })?;
 
-        // println!("{:?}", rows[0].columns());
+        println!("{:?}", rows[0].columns());
 
         let clients_list = rows
             .iter()
