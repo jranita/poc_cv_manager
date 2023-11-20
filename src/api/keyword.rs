@@ -30,7 +30,11 @@ pub async fn list_keywords(
     println!("67     list_keywords()");
     let keywords_list = STORE.lock().await;
 
-    let keywords_list: Vec<Keyword> = Keyword::get_keywords().await?;
+    let keywords_list: Vec<Keyword> = Keyword::get_keywords(
+        limit.into_inner().unwrap_or_default(),
+        offset.into_inner().unwrap_or_default(),
+    )
+    .await?;
 
     std::result::Result::Ok(Json(keywords_list))
 }

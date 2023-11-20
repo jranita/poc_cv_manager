@@ -30,7 +30,11 @@ pub async fn list_jobfunctions(
     println!("67     list_jobfunctions()");
     let jobfunctions_list = STORE.lock().await;
 
-    let jobfunctions_list: Vec<JobFunction> = JobFunction::get_jobfunctions().await?;
+    let jobfunctions_list: Vec<JobFunction> = JobFunction::get_jobfunctions(
+        limit.into_inner().unwrap_or_default(),
+        offset.into_inner().unwrap_or_default(),
+    )
+    .await?;
 
     std::result::Result::Ok(Json(jobfunctions_list))
 }

@@ -20,7 +20,7 @@ pub struct User {
 }
 
 impl User {
-    pub async fn get_users() -> Result<Vec<User>, Error> {
+    pub async fn get_users(_limit: usize, _offset: usize) -> Result<Vec<User>, Error> {
         println!("28     Get_users()");
 
         const QUERY: &str = "SELECT id, firstname, lastname, date_created from users";

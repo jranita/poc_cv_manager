@@ -29,9 +29,13 @@ pub async fn list_cvs(
     println!("67     list_cvs()");
     let cvs_list = STORE.lock().await;
 
-    let cvs_list: Vec<CV> = CV::get_cvs().await?;
+    let cvs_list: Vec<CV> = CV::get_cvs(
+        limit.into_inner().unwrap_or_default(),
+        offset.into_inner().unwrap_or_default(),
+    )
+    .await?;
 
-    std::result::Result::Ok(Json(cvs_list))
+    return std::result::Result::Ok(Json(cvs_list));
 }
 
 /// CV by ID.

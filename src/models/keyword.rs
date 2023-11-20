@@ -15,7 +15,7 @@ pub struct Keyword {
 }
 
 impl Keyword {
-    pub async fn get_keywords() -> Result<Vec<Keyword>, Error> {
+    pub async fn get_keywords(_limit: usize, _offset: usize) -> Result<Vec<Keyword>, Error> {
         println!("28     Get_keywords()");
 
         const QUERY: &str = "SELECT id, keyword_name, date_created from keywords";

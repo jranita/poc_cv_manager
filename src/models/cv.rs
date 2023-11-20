@@ -20,7 +20,7 @@ pub struct CV {
 }
 
 impl CV {
-    pub async fn get_cvs() -> Result<Vec<CV>, Error> {
+    pub async fn get_cvs(_limit: usize, _offset: usize) -> Result<Vec<CV>, Error> {
         const QUERY: &str = "SELECT id, cv_name, date_created from cvs";
 
         let rows = sqlx::query(QUERY)
@@ -94,7 +94,7 @@ impl CV {
         );
         println!("59     query {:?}", query);
 
-        let mut inserted = sqlx::query(&query)
+        let inserted = sqlx::query(&query)
             .fetch_one(get_postgres())
             .await
             .map_err(|e| {

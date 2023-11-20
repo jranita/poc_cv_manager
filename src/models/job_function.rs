@@ -16,7 +16,10 @@ pub struct JobFunction {
 }
 
 impl JobFunction {
-    pub async fn get_jobfunctions() -> Result<Vec<JobFunction>, Error> {
+    pub async fn get_jobfunctions(
+        _limit: usize,
+        _offset: usize,
+    ) -> Result<Vec<JobFunction>, Error> {
         println!("28     Get_job_functions()");
 
         const QUERY: &str = "SELECT id, job_function_name, date_created from jobfunctions";

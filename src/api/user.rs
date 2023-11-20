@@ -30,7 +30,11 @@ pub async fn list_users(
     println!("67     list_users()");
     let users_list = STORE.lock().await;
 
-    let users_list: Vec<User> = User::get_users().await?;
+    let users_list: Vec<User> = User::get_users(
+        limit.into_inner().unwrap_or_default(),
+        offset.into_inner().unwrap_or_default(),
+    )
+    .await?;
 
     std::result::Result::Ok(Json(users_list))
 }
