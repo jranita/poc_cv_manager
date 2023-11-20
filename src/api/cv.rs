@@ -1,14 +1,11 @@
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
-use salvo::http::StatusError;
 use salvo::writing::Json;
 use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
-use crate::models::cv::NewCV;
-use crate::models::cv::CV;
-use crate::models::keyword::Keyword;
+use crate::models::cv::{NewCV, CV};
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<CV>>;

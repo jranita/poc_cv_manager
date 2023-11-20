@@ -2,7 +2,7 @@ use salvo::{prelude::ToSchema, Error};
 
 use crate::{
     db_connectors::get_postgres,
-    models::{Deserialize, Serialize, number_vec_to_string},
+    models::{number_vec_to_string, Deserialize, Serialize},
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};

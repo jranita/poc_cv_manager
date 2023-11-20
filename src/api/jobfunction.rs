@@ -1,10 +1,8 @@
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
-use salvo::http::StatusError;
 use salvo::writing::Json;
 use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
-use sqlx::Row;
 use tokio::sync::Mutex;
 
 use crate::models::job_function::JobFunction;

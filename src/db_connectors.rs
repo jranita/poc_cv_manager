@@ -1,6 +1,6 @@
 use once_cell::sync::OnceCell;
 use sqlx::postgres::PgPool;
-use std::{env, fmt};
+use std::env;
 
 static PG: OnceCell<PgPool> = OnceCell::new();
 

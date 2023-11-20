@@ -1,4 +1,4 @@
-use salvo::{hyper::body::Bytes, oapi::RequestBody, prelude::ToSchema, Error};
+use salvo::{prelude::ToSchema, Error};
 
 use crate::{
     db_connectors::get_postgres,
