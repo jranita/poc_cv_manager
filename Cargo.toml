@@ -17,3 +17,6 @@ tokio = { version = "1", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "macros", "chrono"] }
+
+[dev-dependencies]
+reqwest = {version = "0.11", features = ["json", "blocking"]}
