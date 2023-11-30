@@ -1,12 +1,16 @@
+use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use once_cell::sync::Lazy;
+use rand::{self, distributions::Alphanumeric, rngs::OsRng, Rng};
 use salvo::http::StatusCode;
 use salvo::writing::Json;
 use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
+use crate::authentication;
 use crate::models::user::NewUser;
 use crate::models::user::User;
+use crate::utils::app_error::AppError;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<User>>;
@@ -60,10 +64,11 @@ pub async fn get_user_by_id(id: QueryParam<i32, true>) -> Result<Json<User>, sal
 
 /// Create new user.
 #[endpoint(tags("users"), status_codes(201, 500))]
-pub async fn create_user(new_user_json: JsonBody<NewUser>) -> Result<StatusCode, salvo::Error> {
+pub async fn create_user(new_user_json: JsonBody<NewUser>) -> Result<StatusCode, AppError> {
     tracing::debug!(user = ?new_user_json, "create user");
 
     let JsonBody(new_user) = new_user_json;
+    new_user.pass = authentication::hash_password(new_user.pass)?;
 
     let mut vec = STORE.lock().await;
 
@@ -100,4 +105,15 @@ pub async fn delete_user(id: PathParam<i32>) -> Result<StatusCode, salvo::Error>
 
     vec.push(deleted_company);
     std::result::Result::Ok(StatusCode::OK)
+}
+
+pub fn hash_password(new_password: String) -> Result<String, Error> {
+    let salt = SaltString::generate(OsRng);
+    let argon = argon2::Argon2::default();
+    let hashed_password = argon.hash_password(&new_password.as_bytes(), &salt)
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {:?}", e);
+        anyhow::anyhow!("Failed to execute query")
+    })?;
+    Ok(hashed_password.to_string())
 }

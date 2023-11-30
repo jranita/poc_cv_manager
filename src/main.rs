@@ -12,15 +12,16 @@ use api::keyword::{
     create_keyword, delete_keyword, get_keyword_by_id, list_keywords, update_keyword,
 };
 use api::user::{create_user, delete_user, get_user_by_id, list_users, update_user};
-use db_connectors::{create_pg_pool, get_postgres};
+use authentication::Validator;
+use db_connectors::create_pg_pool;
 use salvo::prelude::*;
 
 pub mod models;
-// use crate::models::*;
 
 pub mod api;
+pub mod authentication;
 pub mod db_connectors;
-// use crate::api::clientcompany;
+pub mod utils;
 
 #[tokio::main]
 async fn main() {
@@ -28,9 +29,15 @@ async fn main() {
 
     create_pg_pool().await;
 
-    let _ = sqlx::migrate!("./migrations").run(get_postgres()).await;
+    // let acceptor = TcpListener::new("0.0.0.0:5800").bind().await;
 
-    let router = Router::new().get(index).push(
+    // let auth_handler = BasicAuth::new(Validator {
+    //     username: "Clara".to_string(),
+    //     password: "1234".to_string(),
+    // });
+
+    let router = Router::with_hoop(auth_handler).get(index).push(
+        // Router::with_path("login").post(auth)
         Router::with_path("api")
             .push(
                 Router::with_path("clients")
