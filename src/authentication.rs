@@ -8,7 +8,7 @@ use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
 use salvo::prelude::*;
 use serde::Deserialize;
 
-use crate::{utils::app_error::AppError, models::user::User};
+use crate::{models::user::User, utils::app_error::AppError};
 
 #[derive(Deserialize)]
 pub struct Credentials {
@@ -47,8 +47,6 @@ pub struct Validator {
 #[async_trait]
 impl BasicAuthValidator for Validator {
     async fn validate(&self, username: &str, password: &str, _depot: &mut Depot) -> bool {
-        
-        
         username == "root" && password == "pwd"
     }
 }
