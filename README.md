@@ -15,3 +15,7 @@ The first time you run the commands above it will be slow... but afterwords it w
 The DB will be empty... but I have in the fixtures folder a script to populate the DB:
 cd fixtures
 sh load_sql.sh
+
+At this moment:
+username: root
+password: pwd

@@ -36,7 +36,7 @@ async fn main() {
     //     password: "1234".to_string(),
     // });
 
-    let router = Router::with_hoop(auth_handler).get(index).push(
+    let router = Router::with_hoop(authentication::auth_handler()).get(index).push(
         // Router::with_path("login").post(auth)
         Router::with_path("api")
             .push(

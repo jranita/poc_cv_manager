@@ -64,10 +64,10 @@ pub async fn get_user_by_id(id: QueryParam<i32, true>) -> Result<Json<User>, sal
 
 /// Create new user.
 #[endpoint(tags("users"), status_codes(201, 500))]
-pub async fn create_user(new_user_json: JsonBody<NewUser>) -> Result<StatusCode, AppError> {
+pub async fn create_user(new_user_json: JsonBody<NewUser>) -> Result<StatusCode, Error> {
     tracing::debug!(user = ?new_user_json, "create user");
 
-    let JsonBody(new_user) = new_user_json;
+    let JsonBody(mut new_user) = new_user_json;
     new_user.pass = authentication::hash_password(new_user.pass)?;
 
     let mut vec = STORE.lock().await;

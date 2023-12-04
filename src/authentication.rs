@@ -51,15 +51,12 @@ impl BasicAuthValidator for Validator {
     }
 }
 
-// #[tokio::main]
-// fn route() -> Router {
-//     let auth_handler = BasicAuth::new(Validator);
-//     Router::with_hoop(auth_handler).goal(hello)
-// // }
-// #[handler]
-// async fn hello() -> &'static str {
-//     "Hello"
-// }
+pub fn auth_handler() -> BasicAuth<Validator> {
+    return BasicAuth::new(Validator {
+        username: String::new(),
+        password: String::new(),
+    })
+}
 
 // #[cfg(test)]
 // mod tests {
