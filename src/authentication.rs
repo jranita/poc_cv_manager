@@ -47,7 +47,22 @@ pub struct Validator {
 #[async_trait]
 impl BasicAuthValidator for Validator {
     async fn validate(&self, username: &str, password: &str, _depot: &mut Depot) -> bool {
-        username == "root" && password == "pwd"
+        let ccc: Credentials = Credentials {
+            email: username.to_string(),
+            password: password.to_string(),
+        };
+
+        println!("56  ----  {:?} --- {:?}", username, password);
+
+        let user: User = User::get_user_by_email(username.to_string()).await.unwrap();
+
+        println!(
+            "57  ----  {:?} --- {:?}",
+            user.id,
+            authorize_user(&user, &ccc).unwrap()
+        );
+
+        self::authorize_user(&user, &ccc).unwrap().len() > 0
     }
 }
 
