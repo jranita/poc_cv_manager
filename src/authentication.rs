@@ -55,7 +55,7 @@ pub fn auth_handler() -> BasicAuth<Validator> {
     return BasicAuth::new(Validator {
         username: String::new(),
         password: String::new(),
-    })
+    });
 }
 
 // #[cfg(test)]

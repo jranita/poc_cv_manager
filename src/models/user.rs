@@ -1,6 +1,8 @@
 use salvo::{prelude::ToSchema, Error};
 
 use crate::{
+    api::user::get_user_by_id,
+    authentication,
     db_connectors::get_postgres,
     models::{number_vec_to_string, Deserialize, Serialize},
 };
@@ -143,6 +145,47 @@ impl User {
         Ok(c)
     }
 
+    pub async fn change_user_password(c: PasswordStruct) -> Result<User, Error> {
+        let hashed_new_password = crate::authentication::hash_password(c.clone().new_password)?;
+        let target_user = Self::get_user(c.user_id).await?;
+
+        let _ = authentication::authorize_user(
+            &target_user,
+            &authentication::Credentials {
+                email: target_user.clone().email,
+                password: c.old_password,
+            },
+        )
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            anyhow::anyhow!("Failed to update password")
+        })?;
+
+        let query: String = format!(
+            "UPDATE users SET password='{}' WHERE id='{}' returning *",
+            hashed_new_password, c.user_id
+        );
+
+        let updated = sqlx::query(&query)
+            .execute(get_postgres())
+            .await
+            .map(|r| r.rows_affected())
+            .map_err(|e| {
+                tracing::error!("Failed to execute update query: {:?}", e);
+                anyhow::anyhow!("Failed to update record")
+            })?;
+
+        // TODO improve error creation/handling
+        if updated == 0 {
+            tracing::error!("Failed update query: probably the ID does not exist");
+            return Err(Error::from(anyhow::anyhow!(
+                "Failed update query: probably the ID does not exist"
+            )));
+        }
+
+        Ok(target_user)
+    }
+
     pub async fn delete_user(id: i32) -> Result<User, Error> {
         println!("130     delete_user() {:?}", id);
 
@@ -188,4 +231,11 @@ pub struct NewUser {
     pub email: String,
     pub pass: String,
     pub role: String,
+}
+
+#[derive(Clone, Debug, Deserialize, ToSchema)]
+pub struct PasswordStruct {
+    pub user_id: i32,
+    pub old_password: String,
+    pub new_password: String,
 }

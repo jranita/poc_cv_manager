@@ -11,7 +11,9 @@ use api::jobfunction::{
 use api::keyword::{
     create_keyword, delete_keyword, get_keyword_by_id, list_keywords, update_keyword,
 };
-use api::user::{create_user, delete_user, get_user_by_id, list_users, update_user};
+use api::user::{
+    create_user, delete_user, get_user_by_id, list_users, update_user, update_user_password,
+};
 use authentication::Validator;
 use db_connectors::create_pg_pool;
 use salvo::prelude::*;
@@ -28,7 +30,9 @@ async fn main() {
     tracing_subscriber::fmt().init();
 
     create_pg_pool().await;
-    let _ = sqlx::migrate!("./migrations").run(db_connectors::get_postgres()).await;
+    let _ = sqlx::migrate!("./migrations")
+        .run(db_connectors::get_postgres())
+        .await;
     // let acceptor = TcpListener::new("0.0.0.0:5800").bind().await;
 
     // let auth_handler = BasicAuth::new(Validator {
@@ -36,67 +40,70 @@ async fn main() {
     //     password: "1234".to_string(),
     // });
 
-    let router = Router::with_hoop(authentication::auth_handler()).get(index).push(
-        // Router::with_path("login").post(auth)
-        Router::with_path("api")
-            .push(
-                Router::with_path("clients")
-                    .get(list_clients)
-                    .post(create_client_company)
-                    .push(
-                        Router::with_path("<id>")
-                            .get(get_client_by_id)
-                            .patch(update_client_company)
-                            .delete(delete_client_company),
-                    ),
-                // .push(Router::with_path("search").post(search_clients)),
-            )
-            .push(
-                Router::with_path("keywords")
-                    .get(list_keywords)
-                    .post(create_keyword)
-                    .push(
-                        Router::with_path("<id>")
-                            .get(get_keyword_by_id)
-                            .patch(update_keyword)
-                            .delete(delete_keyword),
-                    ),
-            )
-            .push(
-                Router::with_path("jobfunctions")
-                    .get(list_jobfunctions)
-                    .post(create_job_function)
-                    .push(
-                        Router::with_path("<id>")
-                            .get(get_job_function_by_id)
-                            .patch(update_job_function)
-                            .delete(delete_job_function),
-                    ),
-            )
-            .push(
-                Router::with_path("cvs")
-                    .get(list_cvs)
-                    .post(create_cv)
-                    .push(Router::with_path("files").get(uploader).post(upload))
-                    .push(
-                        Router::with_path("<id>")
-                            .get(get_cv_by_id)
-                            .patch(update_cv)
-                            .delete(delete_cv),
-                    ), // .push(Router::with_path("search").post(search_cvs)),
-            )
-            .push(
-                Router::with_path("users")
-                    .get(list_users)
-                    .post(create_user)
-                    .push(
-                        Router::with_path("<id>")
-                            .get(get_user_by_id)
-                            .patch(update_user)
-                            .delete(delete_user),
-                    ),
-            ),
-    );
+    let router = Router::with_hoop(authentication::auth_handler())
+        .get(index)
+        .push(
+            // Router::with_path("login").post(auth)
+            Router::with_path("api")
+                .push(
+                    Router::with_path("clients")
+                        .get(list_clients)
+                        .post(create_client_company)
+                        .push(
+                            Router::with_path("<id>")
+                                .get(get_client_by_id)
+                                .patch(update_client_company)
+                                .delete(delete_client_company),
+                        ),
+                    // .push(Router::with_path("search").post(search_clients)),
+                )
+                .push(
+                    Router::with_path("keywords")
+                        .get(list_keywords)
+                        .post(create_keyword)
+                        .push(
+                            Router::with_path("<id>")
+                                .get(get_keyword_by_id)
+                                .patch(update_keyword)
+                                .delete(delete_keyword),
+                        ),
+                )
+                .push(
+                    Router::with_path("jobfunctions")
+                        .get(list_jobfunctions)
+                        .post(create_job_function)
+                        .push(
+                            Router::with_path("<id>")
+                                .get(get_job_function_by_id)
+                                .patch(update_job_function)
+                                .delete(delete_job_function),
+                        ),
+                )
+                .push(
+                    Router::with_path("cvs")
+                        .get(list_cvs)
+                        .post(create_cv)
+                        .push(Router::with_path("files").get(uploader).post(upload))
+                        .push(
+                            Router::with_path("<id>")
+                                .get(get_cv_by_id)
+                                .patch(update_cv)
+                                .delete(delete_cv),
+                        ), // .push(Router::with_path("search").post(search_cvs)),
+                )
+                .push(
+                    Router::with_path("users")
+                        .get(list_users)
+                        .post(create_user)
+                        .push(
+                            Router::with_path("<id>")
+                                .get(get_user_by_id)
+                                .patch(update_user)
+                                .delete(delete_user)
+                                .post(update_user_password),
+                        ),
+                ),
+        );
 
     let doc = OpenApi::new("CV Manager api", "0.0.1").merge_router(&router);
 

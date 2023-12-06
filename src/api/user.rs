@@ -1,6 +1,4 @@
-use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use once_cell::sync::Lazy;
-use rand::{self, distributions::Alphanumeric, rngs::OsRng, Rng};
 use salvo::http::StatusCode;
 use salvo::writing::Json;
 use salvo::Error;
@@ -8,8 +6,8 @@ use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
 use crate::authentication;
-use crate::models::user::NewUser;
 use crate::models::user::User;
+use crate::models::user::{NewUser, PasswordStruct};
 use crate::utils::app_error::AppError;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
@@ -31,7 +29,6 @@ pub async fn list_users(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
 ) -> Result<Json<Vec<User>>, salvo::Error> {
-    println!("67     list_users()");
     let users_list = STORE.lock().await;
 
     let users_list: Vec<User> = User::get_users(
@@ -59,8 +56,6 @@ pub async fn get_user_by_id(id: QueryParam<i32, true>) -> Result<Json<User>, sal
 
     user.push(target_user.clone());
 
-    println!("+++++++++ {:?}", authentication::authorize_user(&target_user, &authentication::Credentials {email: target_user.clone().email, password: "password1".to_string()}));
-
     std::result::Result::Ok(Json(target_user))
 }
 
@@ -74,7 +69,6 @@ pub async fn create_user(new_user_json: JsonBody<NewUser>) -> Result<StatusCode,
 
     let mut vec = STORE.lock().await;
 
-    println!("50  {:?}", new_user.email);
     let new_user = User::insert_user(new_user).await?;
 
     vec.push(new_user);
@@ -96,6 +90,23 @@ pub async fn update_user(new_values_json: JsonBody<User>) -> Result<StatusCode, 
     std::result::Result::Ok(StatusCode::OK)
 }
 
+/// Change existing user password.
+#[endpoint(tags("users"), status_codes(200, 500))]
+pub async fn update_user_password(
+    new_values_json: JsonBody<PasswordStruct>,
+) -> Result<StatusCode, Error> {
+    tracing::debug!(user = ?new_values_json, "change password");
+
+    let JsonBody(new_values) = new_values_json;
+
+    let mut vec = STORE.lock().await;
+    let updated_user = User::change_user_password(new_values).await?;
+
+    vec.push(updated_user);
+
+    std::result::Result::Ok(StatusCode::OK)
+}
+
 /// Delete User.
 #[endpoint(tags("users"), status_codes(200, 401, 404))]
 pub async fn delete_user(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
@@ -107,15 +118,4 @@ pub async fn delete_user(id: PathParam<i32>) -> Result<StatusCode, salvo::Error>
 
     vec.push(deleted_company);
     std::result::Result::Ok(StatusCode::OK)
-}
-
-pub fn hash_password(new_password: String) -> Result<String, Error> {
-    let salt = SaltString::generate(OsRng);
-    let argon = argon2::Argon2::default();
-    let hashed_password = argon.hash_password(&new_password.as_bytes(), &salt)
-    .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
-        anyhow::anyhow!("Failed to execute query")
-    })?;
-    Ok(hashed_password.to_string())
 }
