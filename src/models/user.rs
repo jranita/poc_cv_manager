@@ -80,6 +80,38 @@ impl User {
         Ok(user)
     }
 
+    pub async fn get_user_by_email(target_email: String) -> Result<User, Error> {
+        let query_string = format!("SELECT * from users where email='{}'", target_email);
+
+        //TODO use query_as
+        let row = sqlx::query(&query_string)
+            .fetch_one(get_postgres())
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to execute query: {:?}", e);
+                anyhow::anyhow!("92 Failed to execute query")
+            })?;
+
+        if row.is_empty() {
+            println!("Empty row");
+        }
+
+        let user = User {
+            id: row.get("id"),
+            first_name: row.get("firstname"),
+            last_name: row.get("lastname"),
+            date_created: row.get("date_created"),
+            email: row.get("email"),
+            pass: row.get("password"),
+            role: row.get("role"),
+            cv_id_list: row.get("cv_id_list"),
+        };
+
+        println!("106 {}\n{}", user.pass, user.pass);
+
+        Ok(user)
+    }
+
     pub async fn insert_user(c: NewUser) -> Result<User, Error> {
         println!(
             "56     insert_user() {:?} {:?}",
