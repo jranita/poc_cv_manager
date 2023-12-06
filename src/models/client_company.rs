@@ -36,8 +36,6 @@ impl ClientCompany {
                 anyhow::anyhow!("Failed to execute query")
             })?;
 
-        println!("{:?}", rows[0].columns());
-
         let clients_list = rows
             .iter()
             .map(|r| ClientCompany {

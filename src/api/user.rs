@@ -59,6 +59,8 @@ pub async fn get_user_by_id(id: QueryParam<i32, true>) -> Result<Json<User>, sal
 
     user.push(target_user.clone());
 
+    println!("+++++++++ {:?}", authentication::authorize_user(&target_user, &authentication::Credentials {email: target_user.clone().email, password: "password1".to_string()}));
+
     std::result::Result::Ok(Json(target_user))
 }
 

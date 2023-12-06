@@ -12,7 +12,7 @@ use crate::{models::user::User, utils::app_error::AppError};
 
 #[derive(Deserialize)]
 pub struct Credentials {
-    pub username: String,
+    pub email: String,
     pub password: String,
 }
 

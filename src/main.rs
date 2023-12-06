@@ -28,7 +28,7 @@ async fn main() {
     tracing_subscriber::fmt().init();
 
     create_pg_pool().await;
-
+    let _ = sqlx::migrate!("./migrations").run(db_connectors::get_postgres()).await;
     // let acceptor = TcpListener::new("0.0.0.0:5800").bind().await;
 
     // let auth_handler = BasicAuth::new(Validator {

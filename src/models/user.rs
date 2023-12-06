@@ -33,8 +33,6 @@ impl User {
                 anyhow::anyhow!("Failed to execute query")
             })?;
 
-        // println!("{:?}", rows[0].columns());
-
         let users_list = rows
             .iter()
             .map(|r| User {
@@ -48,7 +46,6 @@ impl User {
                 cv_id_list: vec![],
             })
             .collect::<Vec<User>>();
-        // println!("{:?}", users_list[0]);
 
         Ok(users_list)
     }
@@ -65,8 +62,6 @@ impl User {
                 anyhow::anyhow!("Failed to execute query")
             })?;
 
-        // println!("{:?}", rows[0].columns());
-
         let user = User {
             id: row.get("id"),
             first_name: row.get("firstname"),
@@ -77,6 +72,8 @@ impl User {
             role: row.get("role"),
             cv_id_list: row.get("cv_id_list"),
         };
+
+        println!("{}\n{}", user.pass, user.pass);
 
         Ok(user)
     }
@@ -102,12 +99,14 @@ impl User {
                 anyhow::anyhow!("Failed to insert record")
             })?;
 
+        let hashed_password = crate::authentication::hash_password(inserted.get("password"))?;
+
         Ok(User {
             id: inserted.get("id"),
             first_name: inserted.get("firstname"),
             last_name: inserted.get("lastname"),
             email: inserted.get("email"),
-            pass: inserted.get("password"),
+            pass: hashed_password,
             date_created: inserted.get("date_created"),
             cv_id_list: inserted.get("cv_id_list"),
             role: inserted.get("role"),
