@@ -16,6 +16,6 @@ The DB will be empty... but I have in the fixtures folder a script to populate t
 cd fixtures
 sh load_sql.sh
 
-At this moment:
-username: root
-password: pwd
+After the DB is populated you can login with any of the users in the fixtures.
+For username use the email.
+For password just use password (it is the same for all users in the fixture).
