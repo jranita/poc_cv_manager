@@ -1,3 +1,5 @@
+use std::option;
+
 use anyhow::Result;
 use argon2::{
     password_hash::{Error, SaltString},
@@ -52,15 +54,14 @@ impl BasicAuthValidator for Validator {
             password: password.to_string(),
         };
 
-        println!("56  ----  {:?} --- {:?}", username, password);
+        let result = User::get_user_by_email(username.to_string())
+            .await;
 
-        let user: User = User::get_user_by_email(username.to_string()).await.unwrap();
+        if result.is_err() {
+            return false;
+        }
 
-        println!(
-            "57  ----  {:?} --- {:?}",
-            user.id,
-            authorize_user(&user, &ccc).unwrap()
-        );
+        let user = result.unwrap();
 
         self::authorize_user(&user, &ccc).unwrap().len() > 0
     }
