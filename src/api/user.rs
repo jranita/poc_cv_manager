@@ -1,8 +1,8 @@
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::writing::Json;
-use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
+use salvo::{Depot, Error};
 use tokio::sync::Mutex;
 
 use crate::authentication;
@@ -26,12 +26,14 @@ pub fn new_store() -> Db {
     )
 )]
 pub async fn list_users(
+    depot: &mut Depot,
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
 ) -> Result<Json<Vec<User>>, salvo::Error> {
     let users_list = STORE.lock().await;
 
     let users_list: Vec<User> = User::get_users(
+        depot,
         limit.into_inner().unwrap_or_default(),
         offset.into_inner().unwrap_or_default(),
     )
@@ -48,11 +50,14 @@ pub async fn list_users(
         ("id", description = "Database ID for the User"),
     )
 )]
-pub async fn get_user_by_id(id: QueryParam<i32, true>) -> Result<Json<User>, salvo::Error> {
+pub async fn get_user_by_id(
+    depot: &mut Depot,
+    id: QueryParam<i32, true>,
+) -> Result<Json<User>, salvo::Error> {
     tracing::debug!(id = ?id, "get User");
     let mut user = STORE.lock().await;
 
-    let target_user: User = User::get_user(id.into_inner()).await?;
+    let target_user: User = User::get_user(depot, id.into_inner()).await?;
 
     user.push(target_user.clone());
 
@@ -93,6 +98,7 @@ pub async fn update_user(new_values_json: JsonBody<User>) -> Result<StatusCode, 
 /// Change existing user password.
 #[endpoint(tags("users"), status_codes(200, 500))]
 pub async fn update_user_password(
+    depot: &mut Depot,
     new_values_json: JsonBody<PasswordStruct>,
 ) -> Result<StatusCode, Error> {
     tracing::debug!(user = ?new_values_json, "change password");
@@ -100,7 +106,7 @@ pub async fn update_user_password(
     let JsonBody(new_values) = new_values_json;
 
     let mut vec = STORE.lock().await;
-    let updated_user = User::change_user_password(new_values).await?;
+    let updated_user = User::change_user_password(depot, new_values).await?;
 
     vec.push(updated_user);
 

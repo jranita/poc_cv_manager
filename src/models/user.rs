@@ -1,10 +1,11 @@
-use salvo::{prelude::ToSchema, Error};
+use anyhow::anyhow;
+use salvo::{prelude::ToSchema, Depot, Error};
 
 use crate::{
-    api::user::get_user_by_id,
     authentication,
     db_connectors::get_postgres,
     models::{number_vec_to_string, Deserialize, Serialize},
+    utils::app_error::AppError,
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -22,8 +23,20 @@ pub struct User {
 }
 
 impl User {
-    pub async fn get_users(_limit: usize, _offset: usize) -> Result<Vec<User>, Error> {
+    pub async fn get_users(
+        depot: &mut Depot,
+        _limit: usize,
+        _offset: usize,
+    ) -> Result<Vec<User>, Error> {
         println!("28     Get_users()");
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+        if current_user.role != "admin" {
+            let result = Self::get_user(depot, current_user.id).await;
+            return Ok(vec![result.unwrap()]);
+        }
 
         const QUERY: &str = "SELECT id, firstname, lastname, date_created from users";
 
@@ -52,7 +65,15 @@ impl User {
         Ok(users_list)
     }
 
-    pub async fn get_user(target_id: i32) -> Result<User, Error> {
+    pub async fn get_user(depot: &mut Depot, mut target_id: i32) -> Result<User, Error> {
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+        if current_user.id != target_id && current_user.role != "admin" {
+            println!("Will not be allowed, a user can only get his own information");
+            target_id = current_user.id;
+        }
+
         let query_string = format!("SELECT * from users where id={}", target_id);
 
         //TODO use query_as
@@ -74,8 +95,6 @@ impl User {
             role: row.get("role"),
             cv_id_list: row.get("cv_id_list"),
         };
-
-        println!("{}\n{}", user.pass, user.pass);
 
         Ok(user)
     }
@@ -107,7 +126,7 @@ impl User {
             cv_id_list: row.get("cv_id_list"),
         };
 
-        println!("106 {}\n{}", user.pass, user.pass);
+        // println!("106 {}\n{}", user.pass, user.pass);
 
         Ok(user)
     }
@@ -177,9 +196,9 @@ impl User {
         Ok(c)
     }
 
-    pub async fn change_user_password(c: PasswordStruct) -> Result<User, Error> {
+    pub async fn change_user_password(depot: &mut Depot, c: PasswordStruct) -> Result<User, Error> {
         let hashed_new_password = crate::authentication::hash_password(c.clone().new_password)?;
-        let target_user = Self::get_user(c.user_id).await?;
+        let target_user = Self::get_user(depot, c.user_id).await?;
 
         let _ = authentication::authorize_user(
             &target_user,
@@ -270,4 +289,10 @@ pub struct PasswordStruct {
     pub user_id: i32,
     pub old_password: String,
     pub new_password: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct CurrentUser {
+    pub id: i32,
+    pub role: String,
 }
