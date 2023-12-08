@@ -1,5 +1,3 @@
-use std::option;
-
 use anyhow::Result;
 use argon2::{
     password_hash::{Error, SaltString},
@@ -10,7 +8,10 @@ use salvo::basic_auth::{BasicAuth, BasicAuthValidator};
 use salvo::prelude::*;
 use serde::Deserialize;
 
-use crate::{models::user::User, utils::app_error::AppError};
+use crate::{
+    models::user::{CurrentUser, User},
+    utils::app_error::AppError,
+};
 
 #[derive(Deserialize)]
 pub struct Credentials {
@@ -48,20 +49,29 @@ pub struct Validator {
 
 #[async_trait]
 impl BasicAuthValidator for Validator {
-    async fn validate(&self, username: &str, password: &str, _depot: &mut Depot) -> bool {
+    async fn validate(&self, username: &str, password: &str, depot: &mut Depot) -> bool {
         let ccc: Credentials = Credentials {
             email: username.to_string(),
             password: password.to_string(),
         };
 
-        let result = User::get_user_by_email(username.to_string())
-            .await;
+        // println!("57----kkk----{:?}", depot.basic_auth_username());
+
+        let result = User::get_user_by_email(username.to_string()).await;
 
         if result.is_err() {
             return false;
         }
 
         let user = result.unwrap();
+
+        depot.insert(
+            "currentuser",
+            CurrentUser {
+                id: user.id,
+                role: user.clone().role,
+            },
+        );
 
         self::authorize_user(&user, &ccc).unwrap().len() > 0
     }
