@@ -6,6 +6,7 @@ use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
 use crate::models::cv::{NewCV, CV};
+use crate::Depot;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<CV>>;
@@ -23,13 +24,14 @@ pub fn new_store() -> Db {
     )
 )]
 pub async fn list_cvs(
+    depot: &mut Depot,
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
 ) -> Result<Json<Vec<CV>>, salvo::Error> {
     println!("67     list_cvs()");
     let cvs_list = STORE.lock().await;
 
-    let cvs_list: Vec<CV> = CV::get_cvs(
+    let cvs_list: Vec<CV> = CV::get_cvs( depot,
         limit.into_inner().unwrap_or_default(),
         offset.into_inner().unwrap_or_default(),
     )
@@ -46,11 +48,12 @@ pub async fn list_cvs(
         ("id", description = "Database ID for the CV"),
     )
 )]
-pub async fn get_cv_by_id(id: QueryParam<i32, true>) -> Result<Json<CV>, salvo::Error> {
+pub async fn get_cv_by_id(
+    depot: &mut Depot,id: QueryParam<i32, true>) -> Result<Json<CV>, salvo::Error> {
     tracing::debug!(id = ?id, "get CV");
     let mut cv = STORE.lock().await;
 
-    let target_cv: CV = CV::get_cv(id.into_inner()).await?;
+    let target_cv: CV = CV::get_cv(depot, id.into_inner()).await?;
 
     cv.push(target_cv.clone());
 
@@ -59,7 +62,8 @@ pub async fn get_cv_by_id(id: QueryParam<i32, true>) -> Result<Json<CV>, salvo::
 
 /// Create new CV.
 #[endpoint(tags("cvs"), status_codes(201, 500))]
-pub async fn create_cv(new_cv_json: JsonBody<NewCV>) -> Result<StatusCode, salvo::Error> {
+pub async fn create_cv(
+    depot: &mut Depot, new_cv_json: JsonBody<NewCV>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(cv = ?new_cv_json, "create cv");
 
     let JsonBody(new_cv) = new_cv_json;
@@ -67,7 +71,7 @@ pub async fn create_cv(new_cv_json: JsonBody<NewCV>) -> Result<StatusCode, salvo
     let mut vec = STORE.lock().await;
 
     println!("50  {:?}", new_cv.file_name);
-    let new_cv = CV::insert_cv(new_cv).await?;
+    let new_cv = CV::insert_cv(depot, new_cv).await?;
     println!("52 new cv  {:?}", new_cv);
     vec.push(new_cv);
     Ok(StatusCode::CREATED)
@@ -75,13 +79,14 @@ pub async fn create_cv(new_cv_json: JsonBody<NewCV>) -> Result<StatusCode, salvo
 
 /// Update existing cv.
 #[endpoint(tags("cvs"), status_codes(200, 500))]
-pub async fn update_cv(new_values_json: JsonBody<CV>) -> Result<StatusCode, Error> {
+pub async fn update_cv(
+    depot: &mut Depot, new_values_json: JsonBody<CV>) -> Result<StatusCode, Error> {
     tracing::debug!(cv = ?new_values_json, "update cv");
 
     let JsonBody(new_values) = new_values_json;
 
     let mut vec = STORE.lock().await;
-    let updated_cv = CV::update_cv(new_values).await?;
+    let updated_cv = CV::update_cv(depot, new_values).await?;
 
     vec.push(updated_cv);
 
@@ -90,12 +95,13 @@ pub async fn update_cv(new_values_json: JsonBody<CV>) -> Result<StatusCode, Erro
 
 /// Delete CV.
 #[endpoint(tags("cvs"), status_codes(200, 401, 404))]
-pub async fn delete_cv(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
+pub async fn delete_cv(
+    depot: &mut Depot,id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete cv");
 
     let mut vec = STORE.lock().await;
 
-    let deleted_company = CV::delete_cv(id.into_inner()).await?;
+    let deleted_company = CV::delete_cv(depot, id.into_inner()).await?;
 
     vec.push(deleted_company);
     std::result::Result::Ok(StatusCode::OK)

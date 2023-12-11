@@ -1,7 +1,8 @@
 use anyhow::anyhow;
-use salvo::{prelude::ToSchema, Depot, Error};
+use salvo::{prelude::ToSchema, Error};
 
 use crate::{
+    Depot,
     authentication,
     db_connectors::get_postgres,
     models::{number_vec_to_string, Deserialize, Serialize},

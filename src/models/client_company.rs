@@ -1,8 +1,8 @@
 use salvo::{prelude::ToSchema, Error};
 
-use crate::{
+use crate::{ Depot,
     db_connectors::get_postgres,
-    models::{Deserialize, Serialize},
+    models::{Deserialize, Serialize, user::CurrentUser},
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -24,8 +24,16 @@ pub struct ClientCompany {
 
 // TODO: limit and offset are needed for sorting and pagination
 impl ClientCompany {
-    pub async fn get_clients(_limit: usize, _offset: usize) -> Result<Vec<ClientCompany>, Error> {
+    pub async fn get_clients(depot: &mut Depot, _limit: usize, _offset: usize) -> Result<Vec<ClientCompany>, Error> {
         const QUERY: &str = "SELECT id, company_name, date_created from clientcompanies";
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+        if current_user.role != "admin" {
+            println!("No permissions to see this info, returning empty array");
+            return Ok(vec![]);
+        }
 
 
         let rows = sqlx::query(QUERY)
@@ -49,8 +57,16 @@ impl ClientCompany {
         Ok(clients_list)
     }
 
-    pub async fn get_client(target_id: i32) -> Result<ClientCompany, Error> {
+    pub async fn get_client(depot: &mut Depot, target_id: i32) -> Result<ClientCompany, Error> {
         let query_string = format!("SELECT * from clientcompanies where id={}", target_id);
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+        if current_user.role != "admin" {
+            println!("No permissions to see this info, stub result");
+            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+        }
 
         //TODO use query_as
         let row = sqlx::query(&query_string)
@@ -72,8 +88,16 @@ impl ClientCompany {
         Ok(client)
     }
 
-    pub async fn insert_client(c: NewClientCompany) -> Result<ClientCompany, Error> {
+    pub async fn insert_client(depot: &mut Depot, c: NewClientCompany) -> Result<ClientCompany, Error> {
         println!("56     insert_client() {:?}", c);
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+        if current_user.role != "admin" {
+            println!("No permissions to see this info, stub result");
+            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+        }
 
         let query: String = format!(
             "INSERT INTO clientcompanies (company_name) VALUES ('{}') RETURNING *",
@@ -96,8 +120,16 @@ impl ClientCompany {
         })
     }
 
-    pub async fn update_client(c: ClientCompany) -> Result<ClientCompany, Error> {
+    pub async fn update_client(depot: &mut Depot, c: ClientCompany) -> Result<ClientCompany, Error> {
         println!("101     update_client() {:?}", c);
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+        if current_user.role != "admin" {
+            println!("No permissions to see this info, stub result");
+            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+        }
 
         let query: String = format!(
             "UPDATE clientcompanies SET company_name='{}' WHERE id='{}'",
@@ -125,8 +157,16 @@ impl ClientCompany {
         Ok(c)
     }
 
-    pub async fn delete_client(id: i32) -> Result<ClientCompany, Error> {
+    pub async fn delete_client(depot: &mut Depot, id: i32) -> Result<ClientCompany, Error> {
         println!("130     delete_client() {:?}", id);
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+        if current_user.role != "admin" {
+            println!("No permissions to see this info, stub result");
+            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+        }
 
         let query: String = format!("DELETE FROM clientcompanies WHERE id='{}'", id);
         println!("133     query {:?}", query);

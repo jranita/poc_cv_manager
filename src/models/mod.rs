@@ -4,9 +4,11 @@ pub mod job_function;
 pub mod keyword;
 pub mod user;
 
+use salvo::Depot;
+
 use serde::{Deserialize, Serialize};
 
-pub fn number_vec_to_string(vector: &Vec<i32>) -> String {
+pub fn number_vec_to_string(vector: &[i32]) -> String {
     return "{".to_owned()
         + &vector
             .iter()

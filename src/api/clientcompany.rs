@@ -1,7 +1,7 @@
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::writing::Json;
-use salvo::Error;
+use salvo::{Error, Depot};
 use salvo::{endpoint, oapi::extract::*};
 use tokio::sync::Mutex;
 
@@ -24,12 +24,13 @@ pub fn new_store() -> Db {
     )
 )]
 pub async fn list_clients(
+    depot: &mut Depot,
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
     let clients_list = STORE.lock().await;
 
-    let clients_list: Vec<ClientCompany> = ClientCompany::get_clients(
+    let clients_list: Vec<ClientCompany> = ClientCompany::get_clients(depot,
         limit.into_inner().unwrap_or_default(),
         offset.into_inner().unwrap_or_default(),
     )
@@ -47,12 +48,13 @@ pub async fn list_clients(
     )
 )]
 pub async fn get_client_by_id(
+    depot: &mut Depot,
     id: QueryParam<i32, true>,
 ) -> Result<Json<ClientCompany>, salvo::Error> {
     tracing::debug!(id = ?id, "get client company");
     let mut client = STORE.lock().await;
 
-    let target_client: ClientCompany = ClientCompany::get_client(id.into_inner()).await?;
+    let target_client: ClientCompany = ClientCompany::get_client(depot, id.into_inner()).await?;
 
     client.push(target_client.clone());
 
@@ -81,6 +83,7 @@ pub async fn get_client_by_id(
 /// Create new client company.
 #[endpoint(tags("clients"), status_codes(201, 500))]
 pub async fn create_client_company(
+    depot: &mut Depot,
     new_client_company_json: JsonBody<NewClientCompany>,
 ) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(client_company = ?new_client_company_json, "create client_company");
@@ -90,7 +93,7 @@ pub async fn create_client_company(
     let mut vec = STORE.lock().await;
 
     println!("50  {:?}", new_client_company.company_name);
-    let new_company = ClientCompany::insert_client(new_client_company).await?;
+    let new_company = ClientCompany::insert_client(depot, new_client_company).await?;
 
     vec.push(new_company);
 
@@ -100,6 +103,7 @@ pub async fn create_client_company(
 /// Update existing client company.
 #[endpoint(tags("clients"), status_codes(200, 500))]
 pub async fn update_client_company(
+    depot: &mut Depot,
     new_values_json: JsonBody<ClientCompany>,
 ) -> Result<StatusCode, Error> {
     tracing::debug!(client_company = ?new_values_json, "update client_company");
@@ -107,7 +111,7 @@ pub async fn update_client_company(
     let JsonBody(new_values) = new_values_json;
 
     let mut vec = STORE.lock().await;
-    let updated_company = ClientCompany::update_client(new_values).await?;
+    let updated_company = ClientCompany::update_client(depot, new_values).await?;
     // .map_err(|e| {
     //     tracing::error!("Failed to execute query: {:?}", e);
     //     anyhow::anyhow!("Failed to execute query")
@@ -120,7 +124,8 @@ pub async fn update_client_company(
 
 /// Delete client_company.
 #[endpoint(tags("clients"), status_codes(200, 401, 404))]
-pub async fn delete_client_company(id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
+pub async fn delete_client_company(
+    depot: &mut Depot, id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete client company");
 
     let mut vec = STORE.lock().await;
@@ -135,7 +140,7 @@ pub async fn delete_client_company(id: PathParam<i32>) -> Result<StatusCode, sal
     //     tracing::debug!(id = ?id, "client company is not found");
     //     Err(StatusError::not_found())
     // }
-    let deleted_company = ClientCompany::delete_client(id.into_inner()).await?;
+    let deleted_company = ClientCompany::delete_client(depot, id.into_inner()).await?;
     // .map_err(|e| Err(StatusError::not_found()))?;
 
     vec.push(deleted_company);

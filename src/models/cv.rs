@@ -1,8 +1,9 @@
 use salvo::{prelude::ToSchema, Error};
 
 use crate::{
+    Depot,
     db_connectors::get_postgres,
-    models::{number_vec_to_string, Deserialize, Serialize},
+    models::{number_vec_to_string, Deserialize, Serialize, user::CurrentUser},
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -20,10 +21,19 @@ pub struct CV {
 }
 
 impl CV {
-    pub async fn get_cvs(_limit: usize, _offset: usize) -> Result<Vec<CV>, Error> {
-        const QUERY: &str = "SELECT id, cv_name, date_created from cvs";
+    pub async fn get_cvs(
+        depot: &mut Depot,_limit: usize, _offset: usize) -> Result<Vec<CV>, Error> {
+        let mut query: String = String::from("SELECT id, cv_name, date_created from cvs");
 
-        let rows = sqlx::query(QUERY)
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+
+        if current_user.role != "admin" {
+            query = "SELECT id, cv_name, date_created from cvs where user_id = ".to_owned() + current_user.id.to_string().as_str();
+        }
+
+        let rows = sqlx::query(&query)
             .fetch_all(get_postgres())
             .await
             .map_err(|e| {
@@ -49,8 +59,18 @@ impl CV {
         Ok(cvs_list)
     }
 
-    pub async fn get_cv(target_id: i32) -> Result<CV, Error> {
-        let query_string = format!("SELECT * from cvs where id={}", target_id);
+    pub async fn get_cv(
+        depot: &mut Depot,mut target_id: i32) -> Result<CV, Error> {
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+
+        let mut query_string = format!("SELECT * from cvs where id={}", target_id);
+
+        if current_user.role != "admin" {
+            query_string = query_string + " and user_id=" + current_user.id.to_string().as_str();
+        }
 
         //TODO use query_as
         let row = sqlx::query(&query_string)
@@ -60,6 +80,8 @@ impl CV {
                 tracing::error!("Failed to execute query: {:?}", e);
                 anyhow::anyhow!("Failed to execute query")
             })?;
+
+        // TODO return an error if not admin and retrieving CV from someone else
 
         // println!("{:?}", rows[0].columns());
 
@@ -77,7 +99,8 @@ impl CV {
         Ok(cv)
     }
 
-    pub async fn insert_cv(c: NewCV) -> Result<CV, Error> {
+    pub async fn insert_cv(
+        _depot: &mut Depot,c: NewCV) -> Result<CV, Error> {
         println!("52 ======\n {:?} \n=======\n", c);
 
         println!("56     insert_cv() {:?} {:?}", c, NaiveDateTime::default());
@@ -129,8 +152,13 @@ impl CV {
         })
     }
 
-    pub async fn update_cv(c: CV) -> Result<CV, Error> {
+    pub async fn update_cv(
+        depot: &mut Depot,c: CV) -> Result<CV, Error> {
         println!("101     update_cv() {:?}", c);
+
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
 
         let keywords: String = number_vec_to_string(&c.keyword_list);
 
@@ -139,8 +167,8 @@ impl CV {
         let targetcompanies: String = number_vec_to_string(&c.target_companies);
 
         let query: String = format!(
-            "UPDATE cvs SET cv_name='{}', file_name='{}', keyword_list='{}', target_companies='{}', target_job_functions='{}' WHERE id='{}'",
-            c.cv_name, c.file_name, keywords, targetcompanies, jobfunctions, c.id
+            "UPDATE cvs SET cv_name='{}', file_name='{}', keyword_list='{}', target_companies='{}', target_job_functions='{}' WHERE id='{}' AND user_id ='{}'",
+            c.cv_name, c.file_name, keywords, targetcompanies, jobfunctions, c.id, current_user.id
         );
         println!("179     query {:?}", query);
 
@@ -155,19 +183,28 @@ impl CV {
 
         // TODO improve error creation/handling
         if updated == 0 {
-            tracing::error!("Failed update query: probably the ID does not exist");
+            tracing::error!("Failed update query: probably the ID does not exist or this CV does not belong to you");
             return Err(Error::from(anyhow::anyhow!(
-                "Failed update query: probably the ID does not exist"
+                "Failed update query: probably the ID does not exist or this CV does not belong to you"
             )));
         }
 
         Ok(c)
     }
 
-    pub async fn delete_cv(id: i32) -> Result<CV, Error> {
+    pub async fn delete_cv(
+        depot: &mut Depot,id: i32) -> Result<CV, Error> {
         println!("130     delete_cv() {:?}", id);
 
-        let query: String = format!("DELETE FROM cvs WHERE id='{}'", id);
+        let current_user: &CurrentUser = depot
+            .get("currentuser")
+            .expect("missing current user in depot");
+
+        let mut query: String = format!("DELETE FROM cvs WHERE id='{}'", id);
+
+        if current_user.role != "admin" {
+            query = query + " and user_id=" + current_user.id.to_string().as_str();
+        }
         println!("133     query {:?}", query);
 
         let deleted = sqlx::query(&query)
@@ -181,9 +218,9 @@ impl CV {
 
         // TODO improve error creation/handling
         if deleted == 0 {
-            tracing::error!("Failed delete record: probably the ID does not exist");
+            tracing::error!("Failed delete record: probably the ID does not exist or this CV does not belong to you");
             return Err(Error::from(anyhow::anyhow!(
-                "Failed delete query: probably the ID does not exist"
+                "Failed delete query: probably the ID does not exist or this CV does not belong to you"
             )));
         }
 
