@@ -14,7 +14,7 @@ use api::keyword::{
 use api::user::{
     create_user, delete_user, get_user_by_id, list_users, update_user, update_user_password,
 };
-use authentication::Validator;
+// use authentication::Validator;
 use db_connectors::create_pg_pool;
 use salvo::prelude::*;
 

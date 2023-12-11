@@ -4,3 +4,5 @@ pub mod fileupload;
 pub mod jobfunction;
 pub mod keyword;
 pub mod user;
+
+use salvo::Depot;

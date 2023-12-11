@@ -23,7 +23,7 @@ pub fn authorize_user(user: &User, credentials: &Credentials) -> Result<String, 
     let db_hash = PasswordHash::new(&user.pass)?;
     let argon = Argon2::default();
 
-    argon.verify_password(&credentials.password.as_bytes(), &db_hash)?;
+    argon.verify_password(credentials.password.as_bytes(), &db_hash)?;
     Ok(rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(128)
@@ -35,7 +35,7 @@ pub fn hash_password(new_password: String) -> Result<String> {
     let salt = SaltString::generate(OsRng);
     let argon = argon2::Argon2::default();
     let hashed_password = argon
-        .hash_password(&new_password.as_bytes(), &salt)
+        .hash_password(new_password.as_bytes(), &salt)
         .map_err(|_| AppError::PasswordHashingError)?;
 
     Ok(hashed_password.to_string())
@@ -73,15 +73,15 @@ impl BasicAuthValidator for Validator {
             },
         );
 
-        self::authorize_user(&user, &ccc).unwrap().len() > 0
+        !self::authorize_user(&user, &ccc).unwrap().is_empty()
     }
 }
 
 pub fn auth_handler() -> BasicAuth<Validator> {
-    return BasicAuth::new(Validator {
+    BasicAuth::new(Validator {
         username: String::new(),
         password: String::new(),
-    });
+    })
 }
 
 // #[cfg(test)]
