@@ -21,12 +21,16 @@ pub fn new_store() -> Db {
     parameters(
         ("offset", description = "Offset is an optional query parameter."),
         ("limit", description = "Limit is an optional query parameter."),
+        ("order_by", description = "OrderBy is an optional query parameter. Ex: 'id'."),
+        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'.")
     )
 )]
 pub async fn list_cvs(
     depot: &mut Depot,
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
+    order_by: QueryParam<String, false>,
+    order_direction: QueryParam<String, false>,
 ) -> Result<Json<Vec<CV>>, salvo::Error> {
     println!("67     list_cvs()");
     let cvs_list = STORE.lock().await;
@@ -34,6 +38,8 @@ pub async fn list_cvs(
     let cvs_list: Vec<CV> = CV::get_cvs( depot,
         limit.into_inner().unwrap_or_default(),
         offset.into_inner().unwrap_or_default(),
+        order_by.into_inner().unwrap_or_else(|| "id".to_string()),
+        order_direction.into_inner().unwrap_or_else(|| "ASC".to_string()),
     )
     .await?;
 

@@ -1,3 +1,4 @@
+use chrono::offset;
 use salvo::{prelude::ToSchema, Error};
 
 use crate::{ Depot,
@@ -24,8 +25,10 @@ pub struct ClientCompany {
 
 // TODO: limit and offset are needed for sorting and pagination
 impl ClientCompany {
-    pub async fn get_clients(depot: &mut Depot, _limit: usize, _offset: usize) -> Result<Vec<ClientCompany>, Error> {
-        const QUERY: &str = "SELECT id, company_name, date_created from clientcompanies";
+    pub async fn get_clients(depot: &mut Depot, limit: usize, offset: usize, order_by: String, order_direction: String) -> Result<Vec<ClientCompany>, Error> {
+        let query: String = format!("SELECT id, company_name, date_created from clientcompanies ORDER BY {} {} OFFSET {} LIMIT {}", order_by, order_direction, offset, limit);
+
+        println!("order_by: {:?}", order_by);
 
         let current_user: &CurrentUser = depot
             .get("currentuser")
@@ -36,7 +39,7 @@ impl ClientCompany {
         }
 
 
-        let rows = sqlx::query(QUERY)
+        let rows = sqlx::query(&query)
             .fetch_all(get_postgres())
             .await
             .map_err(|e| {

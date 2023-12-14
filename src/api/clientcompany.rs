@@ -1,3 +1,5 @@
+use std::option;
+
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::writing::Json;
@@ -19,20 +21,26 @@ pub fn new_store() -> Db {
     tags("clients"),
     status_codes(200, 500),
     parameters(
-        ("offset", description = "Offset is an optional query parameter."),
-        ("limit", description = "Limit is an optional query parameter."),
+        ("offset", description = "Offset is an optional query parameter. This is a integer value."),
+        ("limit", description = "Limit is an optional query parameter. This is a integer value."),
+        ("order_by", description = "OrderBy is an optional query parameter. Ex: 'id'."),
+        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'.")
     )
 )]
 pub async fn list_clients(
     depot: &mut Depot,
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
+    order_by: QueryParam<String, false>,
+    order_direction: QueryParam<String, false>,
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
     let clients_list = STORE.lock().await;
 
     let clients_list: Vec<ClientCompany> = ClientCompany::get_clients(depot,
         limit.into_inner().unwrap_or_default(),
         offset.into_inner().unwrap_or_default(),
+        order_by.into_inner().unwrap_or_else(|| "id".to_string()),
+        order_direction.into_inner().unwrap_or_else(|| "ASC".to_string()),
     )
     .await?;
 

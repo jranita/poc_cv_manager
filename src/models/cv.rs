@@ -22,15 +22,15 @@ pub struct CV {
 
 impl CV {
     pub async fn get_cvs(
-        depot: &mut Depot,_limit: usize, _offset: usize) -> Result<Vec<CV>, Error> {
-        let mut query: String = String::from("SELECT id, cv_name, date_created from cvs");
+        depot: &mut Depot,limit: usize, offset: usize, order_by: String, order_direction: String) -> Result<Vec<CV>, Error> {
+        let mut query: String = format!("SELECT id, cv_name, date_created from cvs ORDER BY {} {} OFFSET {} LIMIT {}", order_by, order_direction, offset, limit);
 
         let current_user: &CurrentUser = depot
             .get("currentuser")
             .expect("missing current user in depot");
 
         if current_user.role != "admin" {
-            query = "SELECT id, cv_name, date_created from cvs where user_id = ".to_owned() + current_user.id.to_string().as_str();
+            query = format!("SELECT id, cv_name, date_created from cvs where user_id = {} ORDER BY {} {} LIMIT {}", current_user.id.to_string().as_str();
         }
 
         let rows = sqlx::query(&query)
