@@ -46,7 +46,7 @@ pub async fn list_clients(
         order_direction
             .into_inner()
             .unwrap_or_else(|| "ASC".to_string()),
-        filter.into_inner().unwrap_or_else(|| "".to_string()),
+        super::sanitize_query_string(filter.into_inner().unwrap_or_else(|| "".to_string())),
     )
     .await?;
 
