@@ -1,9 +1,10 @@
 use chrono::offset;
 use salvo::{prelude::ToSchema, Error};
 
-use crate::{ Depot,
+use crate::{
     db_connectors::get_postgres,
-    models::{Deserialize, Serialize, user::CurrentUser},
+    models::{user::CurrentUser, Deserialize, Serialize},
+    Depot,
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -25,10 +26,15 @@ pub struct ClientCompany {
 
 // TODO: limit and offset are needed for sorting and pagination
 impl ClientCompany {
-    pub async fn get_clients(depot: &mut Depot, limit: usize, offset: usize, order_by: String, order_direction: String) -> Result<Vec<ClientCompany>, Error> {
-        let query: String = format!("SELECT id, company_name, date_created from clientcompanies ORDER BY {} {} OFFSET {} LIMIT {}", order_by, order_direction, offset, limit);
-
-        println!("order_by: {:?}", order_by);
+    pub async fn get_clients(
+        depot: &mut Depot,
+        limit: usize,
+        offset: usize,
+        order_by: String,
+        order_direction: String,
+        filter: String,
+    ) -> Result<Vec<ClientCompany>, Error> {
+        let query: String = format!("SELECT id, company_name, date_created FROM clientcompanies WHERE company_name LIKE '%{}%' ORDER BY {} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit);
 
         let current_user: &CurrentUser = depot
             .get("currentuser")
@@ -37,7 +43,6 @@ impl ClientCompany {
             println!("No permissions to see this info, returning empty array");
             return Ok(vec![]);
         }
-
 
         let rows = sqlx::query(&query)
             .fetch_all(get_postgres())
@@ -68,7 +73,11 @@ impl ClientCompany {
             .expect("missing current user in depot");
         if current_user.role != "admin" {
             println!("No permissions to see this info, stub result");
-            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+            return Ok(ClientCompany {
+                id: 9999,
+                company_name: "No permissions to see this info".to_string(),
+                date_created: NaiveDateTime::default(),
+            });
         }
 
         //TODO use query_as
@@ -91,7 +100,10 @@ impl ClientCompany {
         Ok(client)
     }
 
-    pub async fn insert_client(depot: &mut Depot, c: NewClientCompany) -> Result<ClientCompany, Error> {
+    pub async fn insert_client(
+        depot: &mut Depot,
+        c: NewClientCompany,
+    ) -> Result<ClientCompany, Error> {
         println!("56     insert_client() {:?}", c);
 
         let current_user: &CurrentUser = depot
@@ -99,7 +111,11 @@ impl ClientCompany {
             .expect("missing current user in depot");
         if current_user.role != "admin" {
             println!("No permissions to see this info, stub result");
-            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+            return Ok(ClientCompany {
+                id: 9999,
+                company_name: "No permissions to see this info".to_string(),
+                date_created: NaiveDateTime::default(),
+            });
         }
 
         let query: String = format!(
@@ -123,7 +139,10 @@ impl ClientCompany {
         })
     }
 
-    pub async fn update_client(depot: &mut Depot, c: ClientCompany) -> Result<ClientCompany, Error> {
+    pub async fn update_client(
+        depot: &mut Depot,
+        c: ClientCompany,
+    ) -> Result<ClientCompany, Error> {
         println!("101     update_client() {:?}", c);
 
         let current_user: &CurrentUser = depot
@@ -131,7 +150,11 @@ impl ClientCompany {
             .expect("missing current user in depot");
         if current_user.role != "admin" {
             println!("No permissions to see this info, stub result");
-            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+            return Ok(ClientCompany {
+                id: 9999,
+                company_name: "No permissions to see this info".to_string(),
+                date_created: NaiveDateTime::default(),
+            });
         }
 
         let query: String = format!(
@@ -168,7 +191,11 @@ impl ClientCompany {
             .expect("missing current user in depot");
         if current_user.role != "admin" {
             println!("No permissions to see this info, stub result");
-            return Ok(ClientCompany { id: 9999, company_name: "Unknown".to_string(), date_created: NaiveDateTime::default(), });
+            return Ok(ClientCompany {
+                id: 9999,
+                company_name: "No permissions to see this info".to_string(),
+                date_created: NaiveDateTime::default(),
+            });
         }
 
         let query: String = format!("DELETE FROM clientcompanies WHERE id='{}'", id);

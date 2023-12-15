@@ -3,8 +3,8 @@ use std::option;
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::writing::Json;
-use salvo::{Error, Depot};
 use salvo::{endpoint, oapi::extract::*};
+use salvo::{Depot, Error};
 use tokio::sync::Mutex;
 
 use crate::models::client_company::{ClientCompany, NewClientCompany};
@@ -24,7 +24,8 @@ pub fn new_store() -> Db {
         ("offset", description = "Offset is an optional query parameter. This is a integer value."),
         ("limit", description = "Limit is an optional query parameter. This is a integer value."),
         ("order_by", description = "OrderBy is an optional query parameter. Ex: 'id'."),
-        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'.")
+        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'."),
+        ("filter", description = "Filter is an optional query parameter."),
     )
 )]
 pub async fn list_clients(
@@ -33,14 +34,19 @@ pub async fn list_clients(
     limit: QueryParam<usize, false>,
     order_by: QueryParam<String, false>,
     order_direction: QueryParam<String, false>,
+    filter: QueryParam<String, false>,
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
     let clients_list = STORE.lock().await;
 
-    let clients_list: Vec<ClientCompany> = ClientCompany::get_clients(depot,
-        limit.into_inner().unwrap_or_default(),
+    let clients_list: Vec<ClientCompany> = ClientCompany::get_clients(
+        depot,
+        limit.into_inner().unwrap_or_else(|| 1000),
         offset.into_inner().unwrap_or_default(),
         order_by.into_inner().unwrap_or_else(|| "id".to_string()),
-        order_direction.into_inner().unwrap_or_else(|| "ASC".to_string()),
+        order_direction
+            .into_inner()
+            .unwrap_or_else(|| "ASC".to_string()),
+        filter.into_inner().unwrap_or_else(|| "".to_string()),
     )
     .await?;
 
@@ -133,7 +139,9 @@ pub async fn update_client_company(
 /// Delete client_company.
 #[endpoint(tags("clients"), status_codes(200, 401, 404))]
 pub async fn delete_client_company(
-    depot: &mut Depot, id: PathParam<i32>) -> Result<StatusCode, salvo::Error> {
+    depot: &mut Depot,
+    id: PathParam<i32>,
+) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete client company");
 
     let mut vec = STORE.lock().await;
