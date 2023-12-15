@@ -1,10 +1,8 @@
-use std::option;
-
 use once_cell::sync::Lazy;
 use salvo::http::StatusCode;
 use salvo::writing::Json;
+use salvo::Error;
 use salvo::{endpoint, oapi::extract::*};
-use salvo::{Depot, Error};
 use tokio::sync::Mutex;
 
 use crate::models::client_company::{ClientCompany, NewClientCompany};
@@ -29,7 +27,7 @@ pub fn new_store() -> Db {
     )
 )]
 pub async fn list_clients(
-    depot: &mut Depot,
+    depot: &mut super::Depot,
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
     order_by: QueryParam<String, false>,
@@ -62,7 +60,7 @@ pub async fn list_clients(
     )
 )]
 pub async fn get_client_by_id(
-    depot: &mut Depot,
+    depot: &mut super::Depot,
     id: QueryParam<i32, true>,
 ) -> Result<Json<ClientCompany>, salvo::Error> {
     tracing::debug!(id = ?id, "get client company");
@@ -97,7 +95,7 @@ pub async fn get_client_by_id(
 /// Create new client company.
 #[endpoint(tags("clients"), status_codes(201, 500))]
 pub async fn create_client_company(
-    depot: &mut Depot,
+    depot: &mut super::Depot,
     new_client_company_json: JsonBody<NewClientCompany>,
 ) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(client_company = ?new_client_company_json, "create client_company");
@@ -117,7 +115,7 @@ pub async fn create_client_company(
 /// Update existing client company.
 #[endpoint(tags("clients"), status_codes(200, 500))]
 pub async fn update_client_company(
-    depot: &mut Depot,
+    depot: &mut super::Depot,
     new_values_json: JsonBody<ClientCompany>,
 ) -> Result<StatusCode, Error> {
     tracing::debug!(client_company = ?new_values_json, "update client_company");
@@ -139,7 +137,7 @@ pub async fn update_client_company(
 /// Delete client_company.
 #[endpoint(tags("clients"), status_codes(200, 401, 404))]
 pub async fn delete_client_company(
-    depot: &mut Depot,
+    depot: &mut super::Depot,
     id: PathParam<i32>,
 ) -> Result<StatusCode, salvo::Error> {
     tracing::debug!(id = ?id, "delete client company");
