@@ -1,9 +1,9 @@
 use salvo::{prelude::ToSchema, Error};
 
 use crate::{
-    Depot,
     db_connectors::get_postgres,
-    models::{number_vec_to_string, Deserialize, Serialize, user::CurrentUser},
+    models::{number_vec_to_string, user::CurrentUser, Deserialize, Serialize},
+    Depot,
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -22,15 +22,24 @@ pub struct CV {
 
 impl CV {
     pub async fn get_cvs(
-        depot: &mut Depot,limit: usize, offset: usize, order_by: String, order_direction: String) -> Result<Vec<CV>, Error> {
-        let mut query: String = format!("SELECT id, cv_name, date_created from cvs ORDER BY {} {} OFFSET {} LIMIT {}", order_by, order_direction, offset, limit);
+        depot: &mut Depot,
+        limit: usize,
+        offset: usize,
+        order_by: String,
+        order_direction: String,
+        filter: String,
+    ) -> Result<Vec<CV>, Error> {
+        let mut query: String = format!(
+            "SELECT id, cv_name, date_created from cvs ORDER BY {} {} OFFSET {} LIMIT {}",
+            order_by, order_direction, offset, limit
+        );
 
         let current_user: &CurrentUser = depot
             .get("currentuser")
             .expect("missing current user in depot");
 
         if current_user.role != "admin" {
-            query = format!("SELECT id, cv_name, date_created from cvs where user_id = {} ORDER BY {} {} LIMIT {}", current_user.id.to_string().as_str();
+            query = format!("SELECT id, cv_name, date_created from cvs where user_id = {} ORDER BY {} {} OFFSET {} LIMIT {}", current_user.id.to_string().as_str(), order_by, order_direction, offset, limit);
         }
 
         let rows = sqlx::query(&query)
@@ -59,9 +68,7 @@ impl CV {
         Ok(cvs_list)
     }
 
-    pub async fn get_cv(
-        depot: &mut Depot,mut target_id: i32) -> Result<CV, Error> {
-
+    pub async fn get_cv(depot: &mut Depot, mut target_id: i32) -> Result<CV, Error> {
         let current_user: &CurrentUser = depot
             .get("currentuser")
             .expect("missing current user in depot");
@@ -99,8 +106,7 @@ impl CV {
         Ok(cv)
     }
 
-    pub async fn insert_cv(
-        _depot: &mut Depot,c: NewCV) -> Result<CV, Error> {
+    pub async fn insert_cv(_depot: &mut Depot, c: NewCV) -> Result<CV, Error> {
         println!("52 ======\n {:?} \n=======\n", c);
 
         println!("56     insert_cv() {:?} {:?}", c, NaiveDateTime::default());
@@ -152,8 +158,7 @@ impl CV {
         })
     }
 
-    pub async fn update_cv(
-        depot: &mut Depot,c: CV) -> Result<CV, Error> {
+    pub async fn update_cv(depot: &mut Depot, c: CV) -> Result<CV, Error> {
         println!("101     update_cv() {:?}", c);
 
         let current_user: &CurrentUser = depot
@@ -192,8 +197,7 @@ impl CV {
         Ok(c)
     }
 
-    pub async fn delete_cv(
-        depot: &mut Depot,id: i32) -> Result<CV, Error> {
+    pub async fn delete_cv(depot: &mut Depot, id: i32) -> Result<CV, Error> {
         println!("130     delete_cv() {:?}", id);
 
         let current_user: &CurrentUser = depot

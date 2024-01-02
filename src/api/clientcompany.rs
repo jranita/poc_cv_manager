@@ -23,7 +23,7 @@ pub fn new_store() -> Db {
         ("limit", description = "Limit is an optional query parameter. This is a integer value."),
         ("order_by", description = "OrderBy is an optional query parameter. Ex: 'id'."),
         ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'."),
-        ("filter", description = "Filter is an optional query parameter."),
+        ("filter", description = "Filter is an optional query parameter. String like: \"key1,value1,key2, value2 ...\""),
     )
 )]
 pub async fn list_clients(
@@ -36,6 +36,9 @@ pub async fn list_clients(
 ) -> Result<Json<Vec<ClientCompany>>, salvo::Error> {
     let clients_list = STORE.lock().await;
 
+    let filterstring: String =
+        filter.into_inner().unwrap_or_else(|| "".to_string());
+
     let clients_list: Vec<ClientCompany> = ClientCompany::get_clients(
         depot,
         limit.into_inner().unwrap_or_else(|| 1000),
@@ -44,7 +47,7 @@ pub async fn list_clients(
         order_direction
             .into_inner()
             .unwrap_or_else(|| "ASC".to_string()),
-        super::sanitize_query_string(filter.into_inner().unwrap_or_else(|| "".to_string())),
+        super::string_to_filter(filterstring),
     )
     .await?;
 

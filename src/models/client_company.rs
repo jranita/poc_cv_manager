@@ -34,7 +34,7 @@ impl ClientCompany {
         order_direction: String,
         filter: String,
     ) -> Result<Vec<ClientCompany>, Error> {
-        let query: String = format!("SELECT id, company_name, date_created FROM clientcompanies WHERE company_name LIKE '%{}%' ORDER BY {} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit);
+        let query: String = format!("SELECT id, company_name, date_created FROM clientcompanies '{}' ORDER BY {} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit);
 
         let current_user: &CurrentUser = depot
             .get("currentuser")

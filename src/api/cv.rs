@@ -22,7 +22,8 @@ pub fn new_store() -> Db {
         ("offset", description = "Offset is an optional query parameter."),
         ("limit", description = "Limit is an optional query parameter."),
         ("order_by", description = "OrderBy is an optional query parameter. Ex: 'id'."),
-        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'.")
+        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'."),
+        ("filter", description = "Filter is an optional query parameter. String Ex: \"key1, value1, key2, value2 ...\""),
     )
 )]
 pub async fn list_cvs(
@@ -31,15 +32,20 @@ pub async fn list_cvs(
     limit: QueryParam<usize, false>,
     order_by: QueryParam<String, false>,
     order_direction: QueryParam<String, false>,
+    filter: QueryParam<String, false>,
 ) -> Result<Json<Vec<CV>>, salvo::Error> {
     println!("67     list_cvs()");
     let cvs_list = STORE.lock().await;
 
-    let cvs_list: Vec<CV> = CV::get_cvs( depot,
-        limit.into_inner().unwrap_or_default(),
+    let cvs_list: Vec<CV> = CV::get_cvs(
+        depot,
+        limit.into_inner().unwrap_or_else(|| 1000),
         offset.into_inner().unwrap_or_default(),
         order_by.into_inner().unwrap_or_else(|| "id".to_string()),
-        order_direction.into_inner().unwrap_or_else(|| "ASC".to_string()),
+        order_direction
+            .into_inner()
+            .unwrap_or_else(|| "ASC".to_string()),
+        super::sanitize_query_string(filter.into_inner().unwrap_or_else(|| "".to_string())),
     )
     .await?;
 
