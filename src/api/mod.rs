@@ -32,7 +32,7 @@ pub fn string_to_filter(raw_string: String) -> String {
 
     let mut filtervec: Vec<&str> = vec!["WHERE "];
     for (position, element) in strvec.iter().enumerate() {
-        println!("{} {}", position, element);
+        println!("+++++++{}+ +{}+", position, element);
         if position == 0 {
             filtervec.push(element);
             continue;
@@ -59,7 +59,7 @@ pub fn string_to_filter(raw_string: String) -> String {
         //     }
     }
 
-    println!("++++++++++++++ {}", filtervec.join(""));
+    println!("++++++++++++++{:?}\n {}", filtervec, filtervec.join(""));
 
-    filtervec.join(" ").to_string()
+    filtervec.join("").to_string()
 }
