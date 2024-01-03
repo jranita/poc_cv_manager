@@ -37,6 +37,9 @@ pub async fn list_cvs(
     println!("67     list_cvs()");
     let cvs_list = STORE.lock().await;
 
+    let filterstring: String =
+        filter.into_inner().unwrap_or_else(|| "".to_string());
+
     let cvs_list: Vec<CV> = CV::get_cvs(
         depot,
         limit.into_inner().unwrap_or_else(|| 1000),
@@ -45,7 +48,7 @@ pub async fn list_cvs(
         order_direction
             .into_inner()
             .unwrap_or_else(|| "ASC".to_string()),
-        super::sanitize_query_string(filter.into_inner().unwrap_or_else(|| "".to_string())),
+        super::string_to_filter(filterstring),
     )
     .await?;
 

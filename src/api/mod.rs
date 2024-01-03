@@ -19,6 +19,10 @@ pub fn sanitize_query_string(raw_string: String) -> String {
 
 // TODO improve filter to use other operators
 pub fn string_to_filter(raw_string: String) -> String {
+    if raw_string.is_empty() {
+        return "WHERE true".to_string();
+    }
+
     let mut strvec: Vec<String> = raw_string
         .split(",")
         .collect::<Vec<&str>>()
@@ -41,22 +45,10 @@ pub fn string_to_filter(raw_string: String) -> String {
             filtervec.push(" LIKE '%");
             filtervec.push(element);
             filtervec.push("%'");
-        }
-        if position % 2 == 0 {
+        } else {
             filtervec.push(" AND ");
             filtervec.push(element);
         }
-
-        //     match position%2 == 0 {
-        //         true => filtervec.push(&element),
-        //         false =>
-        //     }
-        //         filtervec.push(&element);
-        //         filtervec.push(" LIKE '%");
-        //         filtervec.push(&element);
-        //     } else {
-        //         filtervec.push("%' AND ");
-        //     }
     }
 
     println!("++++++++++++++{:?}\n {}", filtervec, filtervec.join(""));
