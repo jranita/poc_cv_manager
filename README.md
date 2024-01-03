@@ -19,3 +19,6 @@ sh load_sql.sh
 After the DB is populated you can login with any of the users in the fixtures.
 For username use the email.
 For password just use password (it is the same for all users in the fixture).
+
+The admin user is admin@admin.org.
+For password just use password.
