@@ -30,7 +30,7 @@ impl CV {
         filter: String,
     ) -> Result<Vec<CV>, Error> {
         let mut query: String = format!(
-            "SELECT id, cv_name, date_created from cvs ORDER BY {} {} OFFSET {} LIMIT {}",
+            "SELECT id, cv_name, user_id, date_created from cvs ORDER BY {} {} OFFSET {} LIMIT {}",
             order_by, order_direction, offset, limit
         );
 
