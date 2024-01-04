@@ -12,8 +12,8 @@ use sqlx::{FromRow, Row, Type};
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema, FromRow, Type)]
 pub struct User {
     pub id: i32,
-    pub first_name: String,
-    pub last_name: String,
+    pub firstname: String,
+    pub lastname: String,
     pub email: String,
     pub pass: String,
     pub role: String,
@@ -54,8 +54,8 @@ impl User {
             .iter()
             .map(|r| User {
                 id: r.get("id"),
-                first_name: r.get("firstname"),
-                last_name: r.get("lastname"),
+                firstname: r.get("firstname"),
+                lastname: r.get("lastname"),
                 date_created: r.get("date_created"),
                 email: "".to_owned(),
                 role: "".to_owned(),
@@ -89,8 +89,8 @@ impl User {
 
         let user = User {
             id: row.get("id"),
-            first_name: row.get("firstname"),
-            last_name: row.get("lastname"),
+            firstname: row.get("firstname"),
+            lastname: row.get("lastname"),
             date_created: row.get("date_created"),
             email: row.get("email"),
             pass: row.get("password"),
@@ -119,8 +119,8 @@ impl User {
 
         let user = User {
             id: row.get("id"),
-            first_name: row.get("firstname"),
-            last_name: row.get("lastname"),
+            firstname: row.get("firstname"),
+            lastname: row.get("lastname"),
             date_created: row.get("date_created"),
             email: row.get("email"),
             pass: row.get("password"),
@@ -142,7 +142,7 @@ impl User {
 
         let query: String = format!(
             "INSERT INTO users (email, firstname, lastname, password, role) VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING *",
-            c.email, c.first_name, c.last_name, c.pass, c.role
+            c.email, c.firstname, c.lastname, c.pass, c.role
         );
         println!("59     query {:?}", query);
 
@@ -158,8 +158,8 @@ impl User {
 
         Ok(User {
             id: inserted.get("id"),
-            first_name: inserted.get("firstname"),
-            last_name: inserted.get("lastname"),
+            firstname: inserted.get("firstname"),
+            lastname: inserted.get("lastname"),
             email: inserted.get("email"),
             pass: hashed_password,
             date_created: inserted.get("date_created"),
@@ -174,7 +174,7 @@ impl User {
         let cvs: String = number_vec_to_string(&c.cv_id_list);
         let query: String = format!(
             "UPDATE users SET firstname='{}', lastname='{}', email='{}' password='{}' role='{}' cv_id_list='{}' WHERE id='{}'",
-            c.first_name, c.last_name, c.email, c.pass, c.role, cvs, c.id
+            c.firstname, c.lastname, c.email, c.pass, c.role, cvs, c.id
         );
         println!("133     query {:?}", query);
 
@@ -265,11 +265,11 @@ impl User {
         let ccc = User {
             id,
             date_created: NaiveDateTime::default(),
-            first_name: "first_name".to_string(),
-            last_name: "last_name".to_string(),
-            email: "last_name".to_string(),
-            pass: "last_name".to_string(),
-            role: "last_name".to_string(),
+            firstname: "firstname".to_string(),
+            lastname: "lastname".to_string(),
+            email: "lastname".to_string(),
+            pass: "lastname".to_string(),
+            role: "lastname".to_string(),
             cv_id_list: vec![],
         };
 
@@ -279,8 +279,8 @@ impl User {
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]
 pub struct NewUser {
-    pub first_name: String,
-    pub last_name: String,
+    pub firstname: String,
+    pub lastname: String,
     pub email: String,
     pub pass: String,
     pub role: String,
