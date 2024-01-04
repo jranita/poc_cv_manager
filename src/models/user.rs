@@ -1,12 +1,10 @@
-use anyhow::anyhow;
 use salvo::{prelude::ToSchema, Error};
 
 use crate::{
-    Depot,
     authentication,
     db_connectors::get_postgres,
     models::{number_vec_to_string, Deserialize, Serialize},
-    utils::app_error::AppError,
+    Depot,
 };
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{FromRow, Row, Type};
@@ -26,8 +24,11 @@ pub struct User {
 impl User {
     pub async fn get_users(
         depot: &mut Depot,
-        _limit: usize,
-        _offset: usize,
+        limit: usize,
+        offset: usize,
+        order_by: String,
+        order_direction: String,
+        filter: String,
     ) -> Result<Vec<User>, Error> {
         println!("28     Get_users()");
 
@@ -39,9 +40,9 @@ impl User {
             return Ok(vec![result.unwrap()]);
         }
 
-        const QUERY: &str = "SELECT id, firstname, lastname, date_created from users";
+        let query: String = format!("SELECT id, firstname, lastname, date_created FROM users {} ORDER BY {} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit);
 
-        let rows = sqlx::query(QUERY)
+        let rows = sqlx::query(&query)
             .fetch_all(get_postgres())
             .await
             .map_err(|e| {

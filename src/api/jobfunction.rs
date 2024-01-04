@@ -21,18 +21,31 @@ pub fn new_store() -> Db {
     parameters(
         ("offset", description = "Offset is an optional query parameter."),
         ("limit", description = "Limit is an optional query parameter."),
+        ("order_by", description = "OrderBy is an optional query parameter. Ex: 'id'."),
+        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'."),
+        ("filter", description = "Filter is an optional query parameter. String like: \"key1,value1,key2, value2 ...\""),
     )
 )]
 pub async fn list_jobfunctions(
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
+    order_by: QueryParam<String, false>,
+    order_direction: QueryParam<String, false>,
+    filter: QueryParam<String, false>,
 ) -> Result<Json<Vec<JobFunction>>, salvo::Error> {
     println!("67     list_jobfunctions()");
     let jobfunctions_list = STORE.lock().await;
 
+    let filterstring: String = filter.into_inner().unwrap_or_else(|| "".to_string());
+
     let jobfunctions_list: Vec<JobFunction> = JobFunction::get_jobfunctions(
-        limit.into_inner().unwrap_or_default(),
+        limit.into_inner().unwrap_or_else(|| 1000),
         offset.into_inner().unwrap_or_default(),
+        order_by.into_inner().unwrap_or_else(|| "id".to_string()),
+        order_direction
+            .into_inner()
+            .unwrap_or_else(|| "ASC".to_string()),
+        super::string_to_filter(filterstring),
     )
     .await?;
 

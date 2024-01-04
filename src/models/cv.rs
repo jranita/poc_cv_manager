@@ -68,7 +68,7 @@ impl CV {
         Ok(cvs_list)
     }
 
-    pub async fn get_cv(depot: &mut Depot, mut target_id: i32) -> Result<CV, Error> {
+    pub async fn get_cv(depot: &mut Depot, target_id: i32) -> Result<CV, Error> {
         let current_user: &CurrentUser = depot
             .get("currentuser")
             .expect("missing current user in depot");

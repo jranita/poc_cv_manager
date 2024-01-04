@@ -15,12 +15,18 @@ pub struct Keyword {
 }
 
 impl Keyword {
-    pub async fn get_keywords(_limit: usize, _offset: usize) -> Result<Vec<Keyword>, Error> {
+    pub async fn get_keywords(
+        limit: usize,
+        offset: usize,
+        order_by: String,
+        order_direction: String,
+        filter: String,
+    ) -> Result<Vec<Keyword>, Error> {
         println!("28     Get_keywords()");
 
-        const QUERY: &str = "SELECT id, keyword_name, date_created from keywords";
+        let query: String = format!("SELECT id, keyword_name, date_created FROM keywords {} ORDER BY {} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit);
 
-        let rows = sqlx::query(QUERY)
+        let rows = sqlx::query(&query)
             .fetch_all(get_postgres())
             .await
             .map_err(|e| {

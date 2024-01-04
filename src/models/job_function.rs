@@ -17,14 +17,18 @@ pub struct JobFunction {
 
 impl JobFunction {
     pub async fn get_jobfunctions(
-        _limit: usize,
-        _offset: usize,
+        limit: usize,
+        offset: usize,
+        order_by: String,
+        order_direction: String,
+        filter: String,
     ) -> Result<Vec<JobFunction>, Error> {
         println!("28     Get_job_functions()");
 
-        const QUERY: &str = "SELECT id, job_function_name, date_created from jobfunctions";
+        let query: String = format!("SELECT id, job_function_name, date_created FROM jobfunctions {} ORDER BY {} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit);
 
-        let rows = sqlx::query(QUERY)
+        println!("{}", query);
+        let rows = sqlx::query(&query)
             .fetch_all(get_postgres())
             .await
             .map_err(|e| {

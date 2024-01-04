@@ -8,7 +8,6 @@ use tokio::sync::Mutex;
 use crate::authentication;
 use crate::models::user::User;
 use crate::models::user::{NewUser, PasswordStruct};
-use crate::utils::app_error::AppError;
 
 static STORE: Lazy<Db> = Lazy::new(new_store);
 pub type Db = Mutex<Vec<User>>;
@@ -21,21 +20,35 @@ pub fn new_store() -> Db {
 #[endpoint(
     tags("users"),
     parameters(
-        ("offset", description = "Offset is an optional query parameter."),
-        ("limit", description = "Limit is an optional query parameter."),
+        ("offset", description = "Offset is an optional query parameter. This is a integer value."),
+        ("limit", description = "Limit is an optional query parameter. This is a integer value."),
+        ("order_by", description = "OrderBy is an optional query parameter. Ex: 'id'."),
+        ("order_direction", description = "Order Direction is an optional query parameter. Can be 'ASC' or 'DESC'."),
+        ("filter", description = "Filter is an optional query parameter. String like: \"key1,value1,key2, value2 ...\""),
     )
 )]
 pub async fn list_users(
-    depot: &mut Depot,
+    depot: &mut super::Depot,
     offset: QueryParam<usize, false>,
     limit: QueryParam<usize, false>,
+    order_by: QueryParam<String, false>,
+    order_direction: QueryParam<String, false>,
+    filter: QueryParam<String, false>,
 ) -> Result<Json<Vec<User>>, salvo::Error> {
     let users_list = STORE.lock().await;
 
+    let filterstring: String =
+        filter.into_inner().unwrap_or_else(|| "".to_string());
+
     let users_list: Vec<User> = User::get_users(
         depot,
-        limit.into_inner().unwrap_or_default(),
+        limit.into_inner().unwrap_or_else(|| 1000),
         offset.into_inner().unwrap_or_default(),
+        order_by.into_inner().unwrap_or_else(|| "id".to_string()),
+        order_direction
+            .into_inner()
+            .unwrap_or_else(|| "ASC".to_string()),
+        super::string_to_filter(filterstring),
     )
     .await?;
 

@@ -1,6 +1,5 @@
 use std::{io, string::FromUtf8Error};
 
-use argon2;
 use salvo::{async_trait, writing::Text, Depot, Request, Response, Writer};
 use thiserror::Error;
 
