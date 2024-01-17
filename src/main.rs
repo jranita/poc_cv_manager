@@ -17,9 +17,9 @@ use api::user::{
 };
 // use authentication::Validator;
 use db_connectors::create_pg_pool;
-use salvo::prelude::*;
 use salvo::cors::Cors;
 use salvo::http::Method;
+use salvo::prelude::*;
 
 pub mod models;
 
@@ -44,77 +44,85 @@ async fn main() {
     // });
 
     // let router = Router::with_hoop_when(authentication::auth_handler(), |req, _depot| req.method().as_str() != "OPTIONS")
-    let router = Router::with_hoop_when(authentication::auth_handler(), |req, _depot| req.method().as_str() != "OPTIONS")
-        .get(index)
-        .push(
-            // Router::with_path("login").post(auth)
-            Router::with_path("api")
-                .push(
-                    Router::with_path("clients")
-                        .get(list_clients)
-                        .post(create_client_company)
-                        .push(
-                            Router::with_path("<id>")
-                                .get(get_client_by_id)
-                                .patch(update_client_company)
-                                .delete(delete_client_company),
-                        ),
-                )
-                .push(
-                    Router::with_path("keywords")
-                        .options(get_options)
-                        .get(list_keywords)
-                        .post(create_keyword)
-                        .push(
-                            Router::with_path("<id>")
-                                .get(get_keyword_by_id)
-                                .patch(update_keyword)
-                                .delete(delete_keyword),
-                        ),
-                )
-                .push(
-                    Router::with_path("jobfunctions")
-                        .get(list_jobfunctions)
-                        .post(create_job_function)
-                        .push(
-                            Router::with_path("<id>")
-                                .get(get_job_function_by_id)
-                                .patch(update_job_function)
-                                .delete(delete_job_function),
-                        ),
-                )
-                .push(
-                    Router::with_path("cvs")
-                        .get(list_cvs)
-                        .post(create_cv)
-                        .push(Router::with_path("files").get(uploader).post(upload))
-                        .push(
-                            Router::with_path("<id>")
-                                .get(get_cv_by_id)
-                                .patch(update_cv)
-                                .delete(delete_cv),
-                        ),
-                )
-                .push(
-                    Router::with_path("users")
-                        .get(list_users)
-                        .post(create_user)
-                        .push(
-                            Router::with_path("<id>")
-                                .get(get_user_by_id)
-                                .patch(update_user)
-                                .delete(delete_user)
-                                .post(update_user_password),
-                        ),
-                ),
-        );
+    let router = Router::with_hoop_when(authentication::auth_handler(), |req, _depot| {
+        println!("+++ {:?} +++", req.method());
+        req.method().as_str() != "OPTIONS"
+    })
+    .get(index)
+    .push(
+        // Router::with_path("login").post(auth)
+        Router::with_path("api")
+            .push(
+                Router::with_path("clients")
+                    .get(list_clients)
+                    .post(create_client_company)
+                    .push(
+                        Router::with_path("<id>")
+                            .get(get_client_by_id)
+                            .patch(update_client_company)
+                            .delete(delete_client_company),
+                    ),
+            )
+            .push(
+                Router::with_path("keywords")
+                    .options(get_options)
+                    .get(list_keywords)
+                    .post(create_keyword)
+                    .push(
+                        Router::with_path("<id>")
+                            .get(get_keyword_by_id)
+                            .patch(update_keyword)
+                            .delete(delete_keyword),
+                    ),
+            )
+            .push(
+                Router::with_path("jobfunctions")
+                    .get(list_jobfunctions)
+                    .post(create_job_function)
+                    .push(
+                        Router::with_path("<id>")
+                            .get(get_job_function_by_id)
+                            .patch(update_job_function)
+                            .delete(delete_job_function),
+                    ),
+            )
+            .push(
+                Router::with_path("cvs")
+                    .get(list_cvs)
+                    .post(create_cv)
+                    .push(Router::with_path("files").get(uploader).post(upload))
+                    .push(
+                        Router::with_path("<id>")
+                            .get(get_cv_by_id)
+                            .patch(update_cv)
+                            .delete(delete_cv),
+                    ),
+            )
+            .push(
+                Router::with_path("users")
+                    .get(list_users)
+                    .post(create_user)
+                    .push(
+                        Router::with_path("<id>")
+                            .get(get_user_by_id)
+                            .patch(update_user)
+                            .delete(delete_user)
+                            .post(update_user_password),
+                    ),
+            ),
+    );
 
     let doc = OpenApi::new("CV Manager api", "0.0.1").merge_router(&router);
 
     let cors = Cors::new()
-        .allow_origin(["localhost:8080", "127.0.0.1:8080", "0.0.0.0:8080"])
-        .allow_methods(vec![Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
-        .allow_headers("authorization")
+        .allow_origin(vec!["localhost:8080", "http://localhost:8080"])
+        .allow_methods(vec![
+            Method::GET,
+            Method::POST,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers(vec!["authorization", "access-control-allow-origin"])
         .into_handler();
 
     let router = router
@@ -123,7 +131,7 @@ async fn main() {
         .unshift(RapiDoc::new("/api-doc/openapi.json").into_router("/rapidoc"))
         .unshift(ReDoc::new("/api-doc/openapi.json").into_router("/redoc"));
 
-    let service = Service::new(router.hoop(cors0));
+    let service = Service::new(router.hoop(cors));
     // let service = Service::new(router.hoop_when(cors, |req, _depot| req.method().as_str() == "OPTIONS"));
 
     let acceptor = TcpListener::new("0.0.0.0:5800").bind().await;
