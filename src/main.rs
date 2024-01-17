@@ -4,6 +4,7 @@ use api::clientcompany::{
 };
 use api::cv::{create_cv, delete_cv, get_cv_by_id, list_cvs, update_cv};
 use api::fileupload::{upload, uploader};
+use api::get_options;
 use api::jobfunction::{
     create_job_function, delete_job_function, get_job_function_by_id, list_jobfunctions,
     update_job_function,
@@ -17,6 +18,8 @@ use api::user::{
 // use authentication::Validator;
 use db_connectors::create_pg_pool;
 use salvo::prelude::*;
+use salvo::cors::Cors;
+use salvo::http::Method;
 
 pub mod models;
 
@@ -40,7 +43,8 @@ async fn main() {
     //     password: "1234".to_string(),
     // });
 
-    let router = Router::with_hoop(authentication::auth_handler())
+    // let router = Router::with_hoop_when(authentication::auth_handler(), |req, _depot| req.method().as_str() != "OPTIONS")
+    let router = Router::with_hoop_when(authentication::auth_handler(), |req, _depot| req.method().as_str() != "OPTIONS")
         .get(index)
         .push(
             // Router::with_path("login").post(auth)
@@ -55,10 +59,10 @@ async fn main() {
                                 .patch(update_client_company)
                                 .delete(delete_client_company),
                         ),
-                    // .push(Router::with_path("search").post(search_clients)),
                 )
                 .push(
                     Router::with_path("keywords")
+                        .options(get_options)
                         .get(list_keywords)
                         .post(create_keyword)
                         .push(
@@ -89,7 +93,7 @@ async fn main() {
                                 .get(get_cv_by_id)
                                 .patch(update_cv)
                                 .delete(delete_cv),
-                        ), // .push(Router::with_path("search").post(search_cvs)),
+                        ),
                 )
                 .push(
                     Router::with_path("users")
@@ -107,14 +111,23 @@ async fn main() {
 
     let doc = OpenApi::new("CV Manager api", "0.0.1").merge_router(&router);
 
+    let cors = Cors::new()
+        .allow_origin(["localhost:8080", "127.0.0.1:8080", "0.0.0.0:8080"])
+        .allow_methods(vec![Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
+        .allow_headers("authorization")
+        .into_handler();
+
     let router = router
         .unshift(doc.into_router("/api-doc/openapi.json"))
         .unshift(SwaggerUi::new("/api-doc/openapi.json").into_router("/swagger-ui"))
         .unshift(RapiDoc::new("/api-doc/openapi.json").into_router("/rapidoc"))
         .unshift(ReDoc::new("/api-doc/openapi.json").into_router("/redoc"));
 
+    let service = Service::new(router.hoop(cors0));
+    // let service = Service::new(router.hoop_when(cors, |req, _depot| req.method().as_str() == "OPTIONS"));
+
     let acceptor = TcpListener::new("0.0.0.0:5800").bind().await;
-    Server::new(acceptor).serve(router).await;
+    Server::new(acceptor).serve(service).await;
 }
 
 #[handler]

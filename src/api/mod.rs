@@ -5,7 +5,8 @@ pub mod jobfunction;
 pub mod keyword;
 pub mod user;
 
-use salvo::Depot;
+use salvo::{Depot, Error, handler};
+use salvo::http::StatusCode;
 
 pub fn sanitize_query_string(raw_string: String) -> String {
     raw_string
@@ -36,7 +37,6 @@ pub fn string_to_filter(raw_string: String) -> String {
 
     let mut filtervec: Vec<&str> = vec!["WHERE "];
     for (position, element) in strvec.iter().enumerate() {
-        println!("+++++++{}+ +{}+", position, element);
         if position == 0 {
             filtervec.push(element);
             continue;
@@ -51,7 +51,10 @@ pub fn string_to_filter(raw_string: String) -> String {
         }
     }
 
-    println!("++++++++++++++{:?}\n {}", filtervec, filtervec.join(""));
-
     filtervec.join("").to_string()
+}
+
+#[handler]
+pub fn get_options() -> Result<StatusCode, Error> {
+    Ok(StatusCode::OK)
 }
