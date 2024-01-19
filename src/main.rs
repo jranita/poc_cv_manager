@@ -54,6 +54,7 @@ async fn main() {
         Router::with_path("api")
             .push(
                 Router::with_path("clients")
+                    .options(get_options)
                     .get(list_clients)
                     .post(create_client_company)
                     .push(
@@ -77,6 +78,7 @@ async fn main() {
             )
             .push(
                 Router::with_path("jobfunctions")
+                    .options(get_options)
                     .get(list_jobfunctions)
                     .post(create_job_function)
                     .push(
@@ -88,6 +90,7 @@ async fn main() {
             )
             .push(
                 Router::with_path("cvs")
+                    .options(get_options)
                     .get(list_cvs)
                     .post(create_cv)
                     .push(Router::with_path("files").get(uploader).post(upload))
@@ -100,6 +103,7 @@ async fn main() {
             )
             .push(
                 Router::with_path("users")
+                    .options(get_options)
                     .get(list_users)
                     .post(create_user)
                     .push(
