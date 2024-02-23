@@ -58,7 +58,8 @@ async fn main() {
                     .get(list_clients)
                     .post(create_client_company)
                     .push(
-                        Router::with_path("<id>")
+                        Router::with_path("detail")
+                            .options(get_options)
                             .get(get_client_by_id)
                             .patch(update_client_company)
                             .delete(delete_client_company),
@@ -70,7 +71,8 @@ async fn main() {
                     .get(list_keywords)
                     .post(create_keyword)
                     .push(
-                        Router::with_path("<id>")
+                        Router::with_path("detail")
+                            .options(get_options)
                             .get(get_keyword_by_id)
                             .patch(update_keyword)
                             .delete(delete_keyword),
@@ -82,7 +84,8 @@ async fn main() {
                     .get(list_jobfunctions)
                     .post(create_job_function)
                     .push(
-                        Router::with_path("<id>")
+                        Router::with_path("detail")
+                            .options(get_options)
                             .get(get_job_function_by_id)
                             .patch(update_job_function)
                             .delete(delete_job_function),
@@ -95,7 +98,8 @@ async fn main() {
                     .post(create_cv)
                     .push(Router::with_path("files").get(uploader).post(upload))
                     .push(
-                        Router::with_path("<id>")
+                        Router::with_path("detail")
+                            .options(get_options)
                             .get(get_cv_by_id)
                             .patch(update_cv)
                             .delete(delete_cv),
@@ -107,7 +111,8 @@ async fn main() {
                     .get(list_users)
                     .post(create_user)
                     .push(
-                        Router::with_path("<id>")
+                        Router::with_path("detail")
+                            .options(get_options)
                             .get(get_user_by_id)
                             .patch(update_user)
                             .delete(delete_user)
