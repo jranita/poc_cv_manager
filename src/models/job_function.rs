@@ -12,6 +12,7 @@ pub struct JobFunction {
     pub id: i32,
     pub job_function_name: String,
     pub keyword_list: Vec<i32>,
+    pub keyword_names: Vec<String>,
     pub date_created: NaiveDateTime,
 }
 
@@ -25,7 +26,9 @@ impl JobFunction {
     ) -> Result<Vec<JobFunction>, Error> {
         println!("28     Get_job_functions()");
 
-        let query: String = format!("SELECT id, job_function_name, date_created FROM jobfunctions {} ORDER BY {} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit);
+        let query: String = format!(
+            "SELECT a.id, a.job_function_name, a.keyword_list, array_agg(b.keyword_name) as keyword_names, a.date_created FROM jobfunctions a JOIN keywords b ON b.id = any (a.keyword_list) {} group by a.id ORDER BY a.{} {} OFFSET {} LIMIT {}", filter, order_by, order_direction, offset, limit
+        );
 
         println!("{}", query);
         let rows = sqlx::query(&query)
@@ -45,6 +48,7 @@ impl JobFunction {
                 job_function_name: r.get("job_function_name"),
                 date_created: r.get("date_created"),
                 keyword_list: vec![],
+                keyword_names: r.get("keyword_names"),
             })
             .collect::<Vec<JobFunction>>();
         // println!("{:?}", job_functions_list[0]);
@@ -53,7 +57,7 @@ impl JobFunction {
     }
 
     pub async fn get_job_function(target_id: i32) -> Result<JobFunction, Error> {
-        let query_string = format!("SELECT * from jobfunctions where id={}", target_id);
+        let query_string = format!("SELECT a.id, a.job_function_name, a.date_created, a.keyword_list, array_agg(b.keyword_name) as keyword_names from jobfunctions a JOIN keywords b ON b.id = any (a.keyword_list) where a.id={} group by a.id", target_id);
 
         //TODO use query_as
         let row = sqlx::query(&query_string)
@@ -71,6 +75,7 @@ impl JobFunction {
             job_function_name: row.get("job_function_name"),
             date_created: row.get("date_created"),
             keyword_list: row.get("keyword_list"),
+            keyword_names: row.get("keyword_names"),
         };
 
         Ok(job_function)
@@ -100,6 +105,7 @@ impl JobFunction {
             id: inserted.get("id"),
             job_function_name: inserted.get("job_function_name"),
             keyword_list: inserted.get("keyword_list"),
+            keyword_names: vec![],
             date_created: inserted.get("date_created"),
         })
     }
@@ -162,6 +168,7 @@ impl JobFunction {
             id,
             date_created: NaiveDateTime::default(),
             keyword_list: vec![],
+            keyword_names: vec![],
             job_function_name: "job_function_name".to_string(),
         };
 
