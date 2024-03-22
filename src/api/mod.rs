@@ -5,15 +5,24 @@ pub mod jobfunction;
 pub mod keyword;
 pub mod user;
 
-use salvo::{Depot, Error, handler};
 use salvo::http::StatusCode;
+use salvo::{handler, Depot, Error};
 
 pub fn sanitize_query_string(raw_string: String) -> String {
     raw_string
         .chars()
         .map(|x| match x.is_alphanumeric() {
             true => x,
-            false => '_',
+            // false => '_',
+            false => match x {
+                '{' => '{',
+                '}' => '}',
+                ':' => ':',
+                '-' => ',', // for list of ids
+                '+' => '+',
+                '.' => '.',
+                _ => '_',
+            },
         })
         .collect()
 }
@@ -37,14 +46,22 @@ pub fn string_to_filter(raw_string: String) -> String {
 
     let mut filtervec: Vec<&str> = vec!["WHERE "];
     for (position, element) in strvec.iter().enumerate() {
+        let c = element.chars().next().unwrap_or_default();
+        println!("51 char ?{}?", c);
         if position == 0 {
             filtervec.push(element);
             continue;
         }
         if position % 2 != 0 {
-            filtervec.push(" LIKE '%");
-            filtervec.push(element);
-            filtervec.push("%'");
+            if c == '{' {
+                filtervec.push(" = ANY ('");
+                filtervec.push(element);
+                filtervec.push("')");
+            } else {
+                filtervec.push(" LIKE '%");
+                filtervec.push(element);
+                filtervec.push("%'");
+            }
         } else {
             filtervec.push(" AND ");
             filtervec.push(element);
